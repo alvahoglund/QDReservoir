@@ -76,26 +76,11 @@ end
 ## =============== Ground States ====================
 abstract type DiagonalizationAlg end
 struct ExactDiagonalizationAlg <: DiagonalizationAlg end
-function eig_state(hamiltonian::AbstractMatrix, n, ::ExactDiagonalizationAlg)
-    eigenvalues, eigenvectors = eigen(Matrix(hamiltonian))
+
+function eig_state(m::AbstractMatrix, n, ::ExactDiagonalizationAlg)
+    eigenvalues, eigenvectors = eigen(Matrix(m))
     eigenvectors[:, n]
 end
-
-ground_state(ham::AbstractMatrix{T}, H::FermionicHilbertSpaces.AbstractHilbertSpace, qn::Int, alg=ExactDiagonalizationAlg()) where T = eig_state(ham, H, qn, 1, alg)
-
-function eig_state(ham::AbstractMatrix{T}, H::FermionicHilbertSpaces.AbstractHilbertSpace, qn::Int, n, alg) where T
-    index_qn = FermionicHilbertSpaces.FermionicHilbertSpaces.indices(qn, H)
-    ham_qn = ham[index_qn, index_qn]
-    # state = spzeros(T, dim(H), dim(H))
-    state = spzeros(T, dim(H))
-    state[index_qn] = eig_state(ham_qn, n, alg)
-    return state
-end
-
-eig_state(ham::FermionicHilbertSpaces.NonCommutativeProducts.NCAdd, H::FermionicHilbertSpaces.AbstractHilbertSpace, qn::Int, n, alg) =
-    eig_state(matrix_representation(ham, H), H, qn, n, alg)
-ground_state(ham::FermionicHilbertSpaces.NonCommutativeProducts.NCAdd, H::FermionicHilbertSpaces.AbstractHilbertSpace, qn::Int, alg=ExactDiagonalizationAlg()) = ground_state(matrix_representation(ham, H), H, qn, alg)
-
 
 using ArnoldiMethod
 struct ArnoldiAlg <: DiagonalizationAlg end
@@ -112,5 +97,18 @@ function eig_state(m::AbstractMatrix, n, ::ArnoldiAlg; kwargs...)
     eigen[2][:, n]
     # vals, vecs
 end
-ground_state(symham, H, alg::ArnoldiAlg) = eig_state(matrix_representation(symham, H), 1, alg)
 
+ground_state(m) = eig_state(m, 1)
+eig_state(m, n) = eig_state(m, n, ArnoldiAlg())
+
+# Find eigenstate in a qn-sector  
+eig_state(m, H::AbstractHilbertSpace, qn::Number, alg) = eig_state(m, H, sector(qn, H_qn), alg)
+function eig_state(m{T}, H::AbstractHilbertSpace, H_qn::AbstractHilbertSpace, n, alg) where T
+    #Finds the eigenstate in a qn-sector
+    index_qn = indices(H_qn, H)
+    m_qn = m[index_qn, index_qn]
+    state = spzeros(T, dim(H))
+    state[index_qn] = eig_state(m_qn, n, alg)
+    return state
+end
+ground_state(ham::AbstractMatrix{T}, H::FermionicHilbertSpaces.AbstractHilbertSpace, qn::Int, alg) = eig_state(ham, H, qn, 1, alg)

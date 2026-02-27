@@ -3,7 +3,7 @@ using LinearAlgebra, Random, Arpack, SparseArrays, LinearMaps
 using ExponentialUtilities
 using Reexport
 @reexport using FermionicHilbertSpaces
-@reexport using FermionicHilbertSpaces: indices, sector
+@reexport using FermionicHilbertSpaces: indices, sector, AbstractHilbertSpace, NonCommutativeProducts
 
 using Distributions: Normal
 

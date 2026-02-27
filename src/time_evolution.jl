@@ -10,7 +10,7 @@ state_time_evolution(ρ, t, hamiltonian) = state_time_evolution(propagator(t, ha
 ## Only evolve a qn-sector
 
 propagator(t, hamiltonian, qn::Number, H::AbstractHilbertSpace) = propagator(t, hamiltonian, sector(qn, H), H)
-function propagator(t, hamiltonian{T}, H_qn::AbstractHilbertSpace, H ::AbstractHilbertSpace) where T
+function propagator(t, hamiltonian::AbstractMatrix{T}, H_qn::AbstractHilbertSpace, H ::AbstractHilbertSpace) where T
     index = FermionicHilbertSpaces.indices(H_qn, H)
     hamiltonian_sub = hamiltonian[index, index]
     propagator_sub = propagator(t, hamiltonian_sub)
@@ -19,8 +19,8 @@ function propagator(t, hamiltonian{T}, H_qn::AbstractHilbertSpace, H ::AbstractH
     return propagator_padded
 end
 
-operator_time_evolution(operator, t, hamiltonian, qn, H) = operator_time_evolution(propagator(t, hamiltonian, sector(qn, H), H), operator)
-operator_time_evolution(operator, t, hamiltonian, H_qn, H) = operator_time_evolution(propagator(t, hamiltonian, H_qn, H), operator)
+operator_time_evolution(operator, t, hamiltonian, qn::Number, H) = operator_time_evolution(propagator(t, hamiltonian, sector(qn, H), H), operator)
+operator_time_evolution(operator, t, hamiltonian, H_qn::AbstractHilbertSpace, H) = operator_time_evolution(propagator(t, hamiltonian, H_qn, H), operator)
 
-state_time_evolution(ρ, t, hamiltonian, qn, H) = state_time_evolution(propagator(t, hamiltonian, sector(qn,H), H), ρ)
-state_time_evolution(ρ, t, hamiltonian, H_qn, H) = state_time_evolution(propagator(t, hamiltonian, H_qn, H), ρ)
+state_time_evolution(ρ, t, hamiltonian, qn::Number, H) = state_time_evolution(propagator(t, hamiltonian, sector(qn,H), H), ρ)
+state_time_evolution(ρ, t, hamiltonian, H_qn::AbstractHilbertSpace, H) = state_time_evolution(propagator(t, hamiltonian, H_qn, H), ρ)

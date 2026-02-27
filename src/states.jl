@@ -52,15 +52,18 @@ function random_product_state(coordinate_a, coordinate_b, Ha, Hb, Hab, f)
     return tensor_product((ρa, ρb), (Ha, Hb) => Hab)
 end
 
+function random_separable_state(nbr_states, coordinate_a, coordinate_b, Ha, Hb, Hab, f)
+    p = rand(nbr_states)
+    p = p ./ sum(p)
+    ρ_sep = sum(p[i] * random_product_state(coordinate_a, coordinate_b, Ha, Hb, Hab, f) for i ∈ 1:nbr_states)
+    return ρ_sep
+end
+
 random_product_state(qd_system) =
     random_product_state(qd_system.coordinates_main[1], qd_system.coordinates_main[2], qd_system.H_main_a, qd_system.H_main_b, qd_system.H_main, qd_system.f)
 
-function random_separable_state(nbr_states, qd_system)
-    p = rand(nbr_states)
-    p = p ./ sum(p)
-    ρ_sep = sum(p[i] * random_product_state(qd_system) for i ∈ 1:nbr_states)
-    return ρ_sep
-end
+random_separable_state(nbr_states, qd_system) = 
+    random_separable_state(nbr_states, qd_system.coordinates_main[1], qd_system.coordinates_main[2], qd_system.H_main_a, qd_system.H_main_b, qd_system.H_main, qd_system.f)
 
 function hilbert_schmidt_ensamble(dim)
     X = (randn(dim, dim) .+ 1im * randn(dim, dim)) ./ sqrt(2)

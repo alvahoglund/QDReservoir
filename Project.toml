@@ -1,0 +1,31 @@
+name = "QDReservoir"
+uuid = "a8eb8c1c-a57f-457e-a3ea-da0f1636d681"
+version = "0.1.0"
+authors = ["Alva Höglund", "Viktor Svensson"]
+
+[deps]
+ArnoldiMethod = "ec485272-7323-5ecc-a04f-4719b315124d"
+Arpack = "7d9fca2a-8960-54d3-9f78-7d1dccf2cb97"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+ExponentialUtilities = "d4d017d3-3776-5f7e-afef-a10c40355c18"
+FermionicHilbertSpaces = "82e5dd95-83c3-46b2-a303-acc930c81756"
+IJulia = "7073ff75-c697-5162-941a-fcdaad2a7d2a"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+LinearMaps = "7a12625a-238d-50fd-b39a-03d52299707e"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+RandomMatrices = "2576dda1-a324-5b11-aa66-c48ed7e3c618"
+Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+TestItems = "1c621080-faea-4a02-84b6-bbd5e436b8fe"
+
+[compat]
+ArnoldiMethod = "0.4.0"
+ExponentialUtilities = "1.30.0"
+FermionicHilbertSpaces = "0.9.1"
+Reexport = "1.2.2"
+Test = "1.11.0"

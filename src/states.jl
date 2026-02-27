@@ -86,11 +86,11 @@ using ArnoldiMethod
 struct ArnoldiAlg <: DiagonalizationAlg end
 function eig_state(m::AbstractMatrix, n, ::ArnoldiAlg; kwargs...)
     decomp, history = try
-        partialschur(Hermitian(m), nev=1, which=:SR; kwargs...)
+        partialschur(Hermitian(m), nev=n, which=:SR; kwargs...)
     catch e
         @warn e "Trying to increase mindim and restarts"
         println(m)
-        partialschur(Hermitian(m), nev=1, which=:SR; kwargs..., mindim=40, maxdim=size(m, 1), restarts=1000)
+        partialschur(Hermitian(m), nev=n, which=:SR; kwargs..., mindim=40, maxdim=size(m, 1), restarts=1000)
     end
     # @show history
     eigen = partialeigen(decomp)
@@ -103,7 +103,7 @@ eig_state(m, n) = eig_state(m, n, ArnoldiAlg())
 
 # Find eigenstate in a qn-sector  
 eig_state(m, H::AbstractHilbertSpace, qn::Number, alg) = eig_state(m, H, sector(qn, H_qn), alg)
-function eig_state(m{T}, H::AbstractHilbertSpace, H_qn::AbstractHilbertSpace, n, alg) where T
+function eig_state(m::AbstractMatrix{T}, H::AbstractHilbertSpace, H_qn::AbstractHilbertSpace, n, alg) where T
     #Finds the eigenstate in a qn-sector
     index_qn = indices(H_qn, H)
     m_qn = m[index_qn, index_qn]
@@ -111,4 +111,4 @@ function eig_state(m{T}, H::AbstractHilbertSpace, H_qn::AbstractHilbertSpace, n,
     state[index_qn] = eig_state(m_qn, n, alg)
     return state
 end
-ground_state(ham::AbstractMatrix{T}, H::FermionicHilbertSpaces.AbstractHilbertSpace, qn::Int, alg) = eig_state(ham, H, qn, 1, alg)
+ground_state(ham, H::FermionicHilbertSpaces.AbstractHilbertSpace, qn::Int, alg) = eig_state(ham, H, qn, 1, alg)

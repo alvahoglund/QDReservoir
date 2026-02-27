@@ -114,13 +114,12 @@ function default_main_system_dot_params(coordinates)
     return set_dot_params(ϵ_func, ϵb_func, u_intra_func, coordinates)
 end
 
-function defalt_reservoir_dot_params(coordinates)
+function default_reservoir_dot_params(coordinates)
     ϵ_func() = rand()
     ϵb_func() = [0, 0, 1]
     u_intra_func() = rand() + 10
     return set_dot_params(ϵ_func, ϵb_func, u_intra_func, coordinates)
 end
-
 
 function default_interaction_params(coordinates)
     t_func() = rand()
@@ -157,7 +156,7 @@ hamiltonian_interactions_x(interaction_params, coordinates, f) =
 function hamiltonians(quantum_dot_system, seed=nothing)
     isnothing(seed) || Random.seed!(seed)
     dot_params_main = default_main_system_dot_params(quantum_dot_system.coordinates_main)
-    dot_params_reservoir = defalt_reservoir_dot_params(quantum_dot_system.coordinates_reservoir)
+    dot_params_reservoir = default_reservoir_dot_params(quantum_dot_system.coordinates_reservoir)
     interaction_params = default_interaction_params(quantum_dot_system.coordinates_total)
     hamiltonians(quantum_dot_system, dot_params_main, dot_params_reservoir, interaction_params)
 end

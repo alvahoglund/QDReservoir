@@ -153,26 +153,38 @@ hamiltonian_interactions(interaction_params, coordinates, f) =
 hamiltonian_interactions_x(interaction_params, coordinates, f) =
     hamiltonian_t_x(interaction_params.t, coordinates, f) + hamiltonian_so_x(interaction_params.t_so, coordinates, f) + hamiltonian_c_inter_x(interaction_params.u_inter, coordinates, f)
 
-function hamiltonians(quantum_dot_system, seed=nothing)
+function hamiltonians(qd_system, seed=nothing)
     isnothing(seed) || Random.seed!(seed)
-    dot_params_main = default_main_system_dot_params(quantum_dot_system.coordinates_main)
-    dot_params_reservoir = default_reservoir_dot_params(quantum_dot_system.coordinates_reservoir)
-    interaction_params = default_interaction_params(quantum_dot_system.coordinates_total)
-    hamiltonians(quantum_dot_system, dot_params_main, dot_params_reservoir, interaction_params)
+    dot_params_main = default_main_system_dot_params(qd_system.coordinates_main)
+    dot_params_reservoir = default_reservoir_dot_params(qd_system.coordinates_reservoir)
+    interaction_params = default_interaction_params(qd_system.coordinates_total)
+    hamiltonians(qd_system, dot_params_main, dot_params_reservoir, interaction_params)
 end
 
-function hamiltonians_equal_param(quantum_dot_system)
-    dot_params_main = default_equal_dot_params(quantum_dot_system.coordinates_main)
-    dot_params_reservoir = default_equal_dot_params(quantum_dot_system.coordinates_reservoir)
-    interaction_params = default_equal_interaction_params(quantum_dot_system.coordinates_total)
-    hamiltonians(quantum_dot_system, dot_params_main, dot_params_reservoir, interaction_params)
+function hamiltonians_equal_param(qd_system)
+    dot_params_main = default_equal_dot_params(qd_system.coordinates_main)
+    dot_params_reservoir = default_equal_dot_params(qd_system.coordinates_reservoir)
+    interaction_params = default_equal_interaction_params(qd_system.coordinates_total)
+    hamiltonians(qd_system, dot_params_main, dot_params_reservoir, interaction_params)
 end
 
-function hamiltonians(quantum_dot_system, dot_params_main::DotParams, dot_params_reservoir::DotParams, interaction_params::InteractionParams)
-    hamiltonian_main = hamiltonian_dots(dot_params_main, quantum_dot_system.coordinates_main, quantum_dot_system.f) + hamiltonian_interactions(interaction_params, quantum_dot_system.coordinates_main, quantum_dot_system.f)
-    hamiltonian_reservoir = hamiltonian_dots(dot_params_reservoir, quantum_dot_system.coordinates_reservoir, quantum_dot_system.f) + hamiltonian_interactions(interaction_params, quantum_dot_system.coordinates_reservoir, quantum_dot_system.f)
-    hamiltonian_intersection = hamiltonian_interactions_x(interaction_params, quantum_dot_system.coordinates_intersection, quantum_dot_system.f)
+function hamiltonians(qd_system, dot_params_main::DotParams, dot_params_reservoir::DotParams, interaction_params::InteractionParams)
+    hamiltonian_main = hamiltonian_dots(dot_params_main, qd_system.coordinates_main, qd_system.f) + hamiltonian_interactions(interaction_params, qd_system.coordinates_main, qd_system.f)
+    hamiltonian_reservoir = hamiltonian_dots(dot_params_reservoir, qd_system.coordinates_reservoir, qd_system.f) + hamiltonian_interactions(interaction_params, qd_system.coordinates_reservoir, qd_system.f)
+    hamiltonian_intersection = hamiltonian_interactions_x(interaction_params, qd_system.coordinates_intersection, qd_system.f)
     hamiltonian_total = hamiltonian_main + hamiltonian_reservoir + hamiltonian_intersection
     return Hamiltonians(hamiltonian_main, hamiltonian_reservoir, hamiltonian_intersection, hamiltonian_total,
         dot_params_main, dot_params_reservoir, interaction_params)
+end
+
+function matrix_representation_hams(hams :: Hamiltonians, qd_system)
+    Hamiltonians(
+        matrix_representation(hams.hamiltonian_main, qd_system.H_main),
+        matrix_representation(hams.hamiltonian_reservoir, qd_system.H_reservoir_qn),
+        matrix_representation(hams.hamiltonian_total, qd_system.H_total_qn),
+        hams.hamiltonian_intersection,
+        hams.dot_params_main,
+        hams.dot_params_reservoir,
+        hams.interaction_params,
+    )
 end

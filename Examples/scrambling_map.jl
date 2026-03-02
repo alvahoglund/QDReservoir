@@ -6,27 +6,21 @@ nbr_dots_res = 6
 qn_reservoir = 3
 sys = tight_binding_system(nbr_dots_main, nbr_dots_res, qn_reservoir)
 seed = 2
-hams = hamiltonians(sys, seed)
-ψres = ground_state(hams.hamiltonian_reservoir, sys.H_reservoir_qn, QDR.ArnoldiAlg())
+hams = QDR.matrix_representation_hams(hamiltonians(sys, seed), sys)
+ψres = ground_state(hams.hamiltonian_reservoir, QDR.ArnoldiAlg())
 measurements = map(op -> matrix_representation(op, sys.H_total_qn), charge_measurements(sys))
 
-t = 10
-ham = matrix_representation(hams.hamiltonian_total, sys.H_total_qn)
-@time sm_pure = scrambling_map(sys, measurements, ψres, ham, t, QDR.PureStatePropagatorAlg(; krylov_dim=200, tol=1e-6));
+@time sm_pure = scrambling_map(sys, measurements, ψres, hams.hamiltonian_total, t, QDR.PureStatePropagatorAlg(; krylov_dim=200, tol=1e-6));
 ## Check convergence of the scrambling map with respect to the Krylov dimension!
-sm_pures = [scrambling_map(sys, measurements, ψres, ham, t, QDR.PureStatePropagatorAlg(; krylov_dim, tol=1e-6)) for krylov_dim in [100, 200, 300]]
+sm_pures = [scrambling_map(sys, measurements, ψres, hams.hamiltonian_total, t, QDR.PureStatePropagatorAlg(; krylov_dim, tol=1e-6)) for krylov_dim in [100, 200, 300]]
 norm.(diff(sm_pures))
 ##
-@profview sm_pure = scrambling_map(sys, measurements, ψres, ham, t, QDR.PureStatePropagatorAlg(; krylov_dim=200, tol=1e-6));
+@profview sm_pure = scrambling_map(sys, measurements, ψres, hams.hamiltonian_total, t, QDR.PureStatePropagatorAlg(; krylov_dim=200, tol=1e-6));
 ##
-@time reservoir_state = ground_state(hams.hamiltonian_reservoir, sys.H_reservoir, sys.qn_reservoir, QDR.ExactDiagonalizationAlg())
-ρres = ψres * ψres'
-ham_total = matrix_representation(hams.hamiltonian_total, sys.H_total)
-@time measurements_total = map(op -> matrix_representation(op, sys.H_total), charge_measurements(sys))
-@time sm_block = scrambling_map(sys, measurements_total, ρres, ham_total, t, QDR.BlockPropagatorAlg());
-@time sm_full = scrambling_map(sys, measurements_total, ρres, ham_total, t, QDR.FullPropagatorAlg());
-sm_full - sm_block |> norm
-sm_full ≈ sm_block ≈ sm_pure
+@time reservoir_state = ground_state(hams.hamiltonian_reservoir, QDR.ExactDiagonalizationAlg())
+@time measurements_total = map(op -> matrix_representation(op, sys.H_total_qn), charge_measurements(sys))
+@time sm_block = scrambling_map(sys, measurements_total, ψres, hams.hamiltonian_total, t, QDR.BlockPropagatorAlg());
+sm_block ≈ sm_pure
 #@time sm_krylov = scrambling_map(quantum_dot_system, measurements, ρres, ham_total, t, QDR.KrylovPropagatorAlg());
 # @profview sm_pure = scrambling_map(quantum_dot_system, measurements, ψres, ham_total, t, QDR.PureStatePropagatorAlg(; krylov_dim=200, tol=1e-6));
 ##

@@ -96,16 +96,16 @@ function eig_state(m::AbstractMatrix, n, ::ArnoldiAlg; kwargs...)
         partialschur(Hermitian(m), nev=n, which=:SR; kwargs..., mindim=40, maxdim=size(m, 1), restarts=1000)
     end
     # @show history
-    eigen = partialeigen(decomp)
-    eigen[2][:, n]
+    vals, vecs = partialeigen(decomp)
+    idx = sortperm(real(vals))[n]
+    return vecs[:, idx]
     # vals, vecs
 end
 
-ground_state(m) = eig_state(m, 1)
+ground_state(m, alg = ArnoldiAlg()) = eig_state(m, 1, alg)
 eig_state(m, n) = eig_state(m, n, ArnoldiAlg())
 
 # Find eigenstate in a qn-sector  
-eig_state(m, H::AbstractHilbertSpace, qn::Number, alg) = eig_state(m, H, sector(qn, H_qn), alg)
 function eig_state(m::AbstractMatrix{T}, H::AbstractHilbertSpace, H_qn::AbstractHilbertSpace, n, alg) where T
     #Finds the eigenstate in a qn-sector
     index_qn = indices(H_qn, H)
@@ -114,4 +114,5 @@ function eig_state(m::AbstractMatrix{T}, H::AbstractHilbertSpace, H_qn::Abstract
     state[index_qn] = eig_state(m_qn, n, alg)
     return state
 end
-ground_state(ham, H::FermionicHilbertSpaces.AbstractHilbertSpace, qn::Int, alg) = eig_state(ham, H, qn, 1, alg)
+eig_state(m, H::AbstractHilbertSpace, qn::Number, n, alg =ArnoldiAlg()) = eig_state(m, H, sector(qn, H), n, alg)
+ground_state(ham, H::FermionicHilbertSpaces.AbstractHilbertSpace, qn::Int, alg =ArnoldiAlg()) = eig_state(ham, H, sector(qn, H), 1, alg)

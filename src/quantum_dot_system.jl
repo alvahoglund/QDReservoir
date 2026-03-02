@@ -8,10 +8,14 @@ struct QuantumDotSystem
     qn_reservoir::Int
     qn_total::Int
 
-    H_main_qn::FermionicHilbertSpaces.AbstractHilbertSpace
-    H_main::FermionicHilbertSpaces.AbstractHilbertSpace
     H_main_a::FermionicHilbertSpaces.AbstractHilbertSpace
+    H_main_a_qn::FermionicHilbertSpaces.AbstractHilbertSpace
+
     H_main_b::FermionicHilbertSpaces.AbstractHilbertSpace
+    H_main_b_qn::FermionicHilbertSpaces.AbstractHilbertSpace
+
+    H_main::FermionicHilbertSpaces.AbstractHilbertSpace
+    H_main_qn::FermionicHilbertSpaces.AbstractHilbertSpace
 
     H_reservoir::FermionicHilbertSpaces.AbstractHilbertSpace
     H_reservoir_qn::FermionicHilbertSpaces.AbstractHilbertSpace
@@ -29,20 +33,28 @@ function tight_binding_system(nbr_dots_main, nbr_dots_res, qn_reservoir)
     coordinates_main, coordinates_reservoir, coordinates_total, coordinates_intersection = generate_grid(nbr_dots_main, nbr_dots_res)
     qn_total = qn_reservoir + nbr_dots_main
 
-    H_main_qn = tensor_product(hilbert_space(labels([coordinates_main[1]]), NumberConservation(1)), hilbert_space(labels([coordinates_main[2]]), NumberConservation(1)))
-    H_main = hilbert_space(keys(H_main_qn), NumberConservation())
     H_main_a = hilbert_space(labels([coordinates_main[1]]), NumberConservation())
+    H_main_a_qn = sector(1, H_main_a)
+
     H_main_b = hilbert_space(labels([coordinates_main[2]]), NumberConservation())
+    H_main_b_qn = sector(1, H_main_b)
+    
+    H_main_qn = tensor_product(H_main_a_qn, H_main_b_qn)
+    H_main = hilbert_space(keys(H_main_qn), NumberConservation())
+    
     H_reservoir = hilbert_space(labels(coordinates_reservoir), NumberConservation())
-    H_total = hilbert_space(labels(coordinates_total), NumberConservation())
-    H_total_qn = sector(qn_total, H_total)
     H_reservoir_qn = sector(qn_reservoir, H_reservoir)
 
+    H_total = hilbert_space(labels(coordinates_total), NumberConservation())
+    H_total_qn = sector(qn_total, H_total)
+    
     @fermions f
 
     QuantumDotSystem(coordinates_main, coordinates_reservoir, coordinates_total, coordinates_intersection,
         nbr_dots_main, qn_reservoir, qn_total,
-        H_main_qn, H_main, H_main_a, H_main_b,
+        H_main_a, H_main_a_qn, 
+        H_main_b, H_main_b_qn,
+        H_main, H_main_qn,
         H_reservoir,
         H_reservoir_qn,
         H_total, H_total_qn,

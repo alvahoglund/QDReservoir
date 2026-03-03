@@ -31,7 +31,7 @@ end
         random_separable_state(3, qd_system)]
 
     total_states = map(initial_state -> tensor_product((initial_state, ρres), (qd_system.H_main_qn, qd_system.H_reservoir_qn) => qd_system.H_total_qn), initial_states)
-    measurements = map(op -> matrix_representation(op, qd_system.H_total_qn), charge_measurements(qd_system))
+    measurements = map(op -> matrix_representation(op, qd_system.H_total_qn), charge_measurements(qd_system.coordinates_total, qd_system.f))
 
     t = 10
     ham_total = matrix_representation(hams.hamiltonian_total, qd_system.H_total_qn)

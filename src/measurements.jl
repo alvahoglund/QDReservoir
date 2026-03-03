@@ -40,12 +40,10 @@ pauli_string_matrix_main(qd_system) =
 single_charge_measurements(coordinates, f) = [nbr_op(coordinate, f) for coordinate in coordinates]
 double_charge_measurements(coordinates, f) = [nbr2_op(coordinate, f) for coordinate in coordinates]
 charge_measurements(coordinates, f) = vcat(single_charge_measurements(coordinates, f), double_charge_measurements(coordinates, f))
-charge_measurements(qd_system) = charge_measurements(qd_system.coordinates_total, qd_system.f)
 
 single_charge_probabilities(coordinates, f) = [p1(coordinate, f) for coordinate in coordinates]
 double_charge_probabilities(coordinates, f) = [p2(coordinate, f) for coordinate in coordinates]
 charge_probabilities(coordinates, f) = vcat(single_charge_probabilities(coordinates, f), double_charge_probabilities(coordinates, f))
-charge_probabilities(qd_system) = charge_probabilities(qd_system.coordinates_total, qd_system.f)
 
 function correlated_measurements(coordinates, qn_total, f)
     valid_combos = get_measurement_combinations(coordinates, qn_total)

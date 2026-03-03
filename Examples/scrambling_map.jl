@@ -24,7 +24,6 @@ sm_block ≈ sm_pure
 #@time sm_krylov = scrambling_map(quantum_dot_system, measurements, ρres, ham_total, t, QDR.KrylovPropagatorAlg());
 # @profview sm_pure = scrambling_map(quantum_dot_system, measurements, ψres, ham_total, t, QDR.PureStatePropagatorAlg(; krylov_dim=200, tol=1e-6));
 ##
-# ind = indices(sys.H_main_qn, sys.H_main)
 
 # total_states = map(initial_state -> tensor_product((initial_state, ρres), (sys.H_main, sys.H_reservoir) => sys.H_total), initial_states);
 initial_states = [def_state(triplet_plus, sys.H_main, sys.f),

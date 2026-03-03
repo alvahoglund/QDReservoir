@@ -90,15 +90,3 @@ end
 
 ground_state(m, alg=ArnoldiAlg()) = eig_state(m, 1, alg)
 eig_state(m, n) = eig_state(m, n, ArnoldiAlg())
-
-# Find eigenstate in a qn-sector  
-function eig_state(m::AbstractMatrix{T}, H::AbstractHilbertSpace, H_qn::AbstractHilbertSpace, n, alg) where T
-    #Finds the eigenstate in a qn-sector
-    index_qn = indices(H_qn, H)
-    m_qn = m[index_qn, index_qn]
-    state = spzeros(T, dim(H))
-    state[index_qn] = eig_state(m_qn, n, alg)
-    return state
-end
-eig_state(m, H::AbstractHilbertSpace, qn::Number, n, alg=ArnoldiAlg()) = eig_state(m, H, sector(qn, H), n, alg)
-ground_state(ham, H::FermionicHilbertSpaces.AbstractHilbertSpace, qn::Int, alg=ArnoldiAlg()) = eig_state(ham, H, sector(qn, H), 1, alg)

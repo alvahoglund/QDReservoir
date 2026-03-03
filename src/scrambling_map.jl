@@ -1,8 +1,8 @@
 abstract type AbstractPropagatorAlg end
 struct BlockPropagatorAlg <: AbstractPropagatorAlg end
 
-function scrambling_map(_H_main, H_reservoir, H_total, measurements, ψres, hamiltonian, t, ::BlockPropagatorAlg)
-    H_main = sector((2, (1, 1)), _H_main)
+function scrambling_map(H_main, H_reservoir, H_total, measurements, ψres, hamiltonian, t, ::BlockPropagatorAlg)
+    # H_main = sector((2, (1, 1)), _H_main)
     ρ_res = density_matrix(ψres)
     U = propagator(t, hamiltonian)
     measurements_t = map(m -> operator_time_evolution(U, m), measurements)
@@ -15,8 +15,8 @@ struct PureStatePropagatorAlg <: AbstractPropagatorAlg
     tol::Float64
 end
 PureStatePropagatorAlg(; krylov_dim=200, tol=1e-6) = PureStatePropagatorAlg(krylov_dim, tol)
-function scrambling_map(_H_main, H_reservoir, H_total, measurements, ψres::AbstractVector, hamiltonian, t, alg::PureStatePropagatorAlg)
-    H_main = sector((2, (1, 1)), _H_main)
+function scrambling_map(H_main, H_reservoir, H_total, measurements, ψres::AbstractVector, hamiltonian, t, alg::PureStatePropagatorAlg)
+    # H_main = sector((2, (1, 1)), _H_main)
     iH = -im .* hamiltonian
     N = dim(H_total)
     N_main = dim(H_main)

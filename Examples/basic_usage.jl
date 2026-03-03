@@ -14,7 +14,7 @@ hams = QDR.matrix_representation_hams(hamiltonians(sys),sys)
 ρ_tot = tensor_product((ρ_main, ρ_res), (sys.H_main_qn, sys.H_reservoir_qn) => sys.H_total_qn)
 
 ## Measurements
-m_list = map(m ->matrix_representation(m, sys.H_total_qn), QDR.charge_probabilities(sys.coordinates_total, sys.f))
+m_list = map(m ->matrix_representation(m, sys.H_total_qn), QDR.charge_probabilities(sys.grid.total, sys.f))
 t = 10
 S = scrambling_map(sys, m_list, ψ_res, hams.hamiltonian_total, t)
 S*reshape(ρ_main, 16,1)

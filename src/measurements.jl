@@ -12,13 +12,27 @@ p0(coordinate, f) = 1 - p1(coordinate, f) - p2(coordinate, f) #Probability to me
 p1(coordinate, f) = nbr_op(coordinate, f) - 2 * nbr2_op(coordinate, f) # Probability to measure 1 charge
 p2(coordinate, f) = nbr2_op(coordinate, f) # Probability to measure 2 charges
 
-pauli_string(σi, σj, coordinate_i, coordinate_j, H_i, H_j, H_ij, f) = 
-    tensor_product((matrix_representation(σi(coordinate_i, f), H_i),
-                    matrix_representation(σj(coordinate_j, f), H_j)),
-                    (H_i, H_j) => H_ij)
-
-pauli_string_main(σi, σj, qd_system) = 
-    pauli_string(σi, σj, qd_system.coordinates_main[1], qd_system.coordinates_main[2], qd_system.H_main_a_qn, qd_system.H_main_b_qn, qd_system.H_main_qn, qd_system.f)
+function paulis(H, Hfinal=H)
+    dim(H) == 2 || throw(ArgumentError("Paulis is only defined for 2-dimensional Hilbert spaces"))
+    coords = sites(H)
+    x = only(coords)
+    I = embed([1 0; 0 1], H => Hfinal)
+    X = embed([0 1; 1 0], H => Hfinal)
+    Y = embed([0 -im; im 0], H => Hfinal)
+    Z = embed([1 0; 0 -1], H => Hfinal)
+    keys = [(x, :σ0), (x, :σx), (x, :σy), (x, :σz)]
+    vals = [I, X, Y, Z]
+    return Dict(map(Pair, keys, vals))
+end
+function pauli_strings(Hs, Hfinal)
+    ps = map(H -> collect(paulis(H, Hfinal)), Hs)
+    pairs = map(Iterators.product(ps...)) do pairs
+        key = tuple(first.(pairs)...)
+        mat = prod(last.(pairs))
+        key => mat
+    end
+    Dict(pairs)
+end
 
 process_complex(value, tolerance=1e-3) = abs(imag(value)) < tolerance ? real(value) : throw(ArgumentError("The value has an imaginary part: $(imag(value))"))
 expectation_value(ρ, op) = process_complex((tr(ρ * op)))
@@ -26,24 +40,18 @@ variance(ρ, op) = expectation_value(ρ, op^2) - expectation_value(ρ, op)^2
 
 ## ======== Measurement sets =================
 
-pauli_strings(coordinate_i, coordinate_j, H_i, H_j, H_ij, f) = 
-    [pauli_string(σi, σj, coordinate_i, coordinate_j, H_i, H_j, H_ij, f) for σi in [σ0, σx, σy, σz] for σj in [σ0, σx, σy, σz]]
-pauli_string_labels() = ["$(a) ⊗ $(b)" for a in ["σ0", "σx", "σy", "σz"] for b in ["σ0", "σx", "σy", "σz"]]
+function charge_measurements(qd_system)
+    coordinates = qd_system.grid.total
+    f = qd_system.f
+    single_charge_sym_ops = [nbr_op(coordinate, f) for coordinate in coordinates]
+    double_charge_sym_ops = [nbr2_op(coordinate, f) for coordinate in coordinates]
+    symops = vcat(single_charge_sym_ops, double_charge_sym_ops)
+    [matrix_representation(op, qd_system.H_total) for op in symops]
+end
 
-#A matrix where row is a row vectorized pauli matrix:  |σ_i ⊗ σ_j) = vec(σ_i ⊗ σ_j)^†
-pauli_string_matrix(coordinate_i, coordinate_j, H_i, H_j, H_ij, f) = 
-    vcat([reshape(pauli_string, dim(H_ij)^2, 1)' for pauli_string in pauli_strings(coordinate_i, coordinate_j, H_i, H_j, H_ij, f)]...)
-
-pauli_string_matrix_main(qd_system) = 
-    pauli_string_matrix(qd_system.coordinates_main[1], qd_system.coordinates_main[2], qd_system.H_main_a_qn, qd_system.H_main_b_qn, qd_system.H_main_qn, qd_system.f)
-
-single_charge_measurements(coordinates, f) = [nbr_op(coordinate, f) for coordinate in coordinates]
-double_charge_measurements(coordinates, f) = [nbr2_op(coordinate, f) for coordinate in coordinates]
-charge_measurements(coordinates, f) = vcat(single_charge_measurements(coordinates, f), double_charge_measurements(coordinates, f))
-
-single_charge_probabilities(coordinates, f) = [p1(coordinate, f) for coordinate in coordinates]
-double_charge_probabilities(coordinates, f) = [p2(coordinate, f) for coordinate in coordinates]
-charge_probabilities(coordinates, f) = vcat(single_charge_probabilities(coordinates, f), double_charge_probabilities(coordinates, f))
+# single_charge_probabilities(coordinates, f) = [p1(coordinate, f) for coordinate in coordinates]
+# double_charge_probabilities(coordinates, f) = [p2(coordinate, f) for coordinate in coordinates]
+# charge_probabilities(coordinates, f) = vcat(single_charge_probabilities(coordinates, f), double_charge_probabilities(coordinates, f))
 
 function correlated_measurements(coordinates, qn_total, f)
     valid_combos = get_measurement_combinations(coordinates, qn_total)
@@ -60,7 +68,7 @@ function get_measurement_combinations(coordinates, qn_total)
     return valid_combos
 end
 measurement_combination_op(coordinates, f, measurement_combo) = prod([p(measurement_combo[i], coord, f) for (i, coord) in enumerate(coordinates)])
-correlated_measurements(qd_system) = correlated_measurements(qd_system.coordinates_total, qd_system.qn_total, qd_system.f)
+correlated_measurements(qd_system) = correlated_measurements(qd_system.grid.total, qd_system.qn_total, qd_system.f)
 
 ## ============= Spin measurements ======================
 
@@ -68,26 +76,11 @@ correlated_measurements(qd_system) = correlated_measurements(qd_system.coordinat
 Si2(coordinate_i, f, H_i) = matrix_representation(3 / 4 * p1(coordinate_i, f), H_i)
 
 # Operator for S_i ⋅ S_j
-function Sij(coordinate_i, coordinate_j, f, H)
-    Hi = hilbert_space(labels([coordinate_i]), NumberConservation())
-    Hj = hilbert_space(labels([coordinate_j]), NumberConservation())
-    Hij = hilbert_space(labels([coordinate_i, coordinate_j]), NumberConservation())
-
-    σxi = matrix_representation(σx(coordinate_i, f), Hi)
-    σxj = matrix_representation(σx(coordinate_j, f), Hj)
-    σxij = tensor_product((σxi, σxj), (Hi, Hj) => Hij)
-
-    σyi = matrix_representation(σy(coordinate_i, f), Hi)
-    σyj = matrix_representation(σy(coordinate_j, f), Hj)
-    σyij = tensor_product((σyi, σyj), (Hi, Hj) => Hij)
-
-    σzi = matrix_representation(σz(coordinate_i, f), Hi)
-    σzj = matrix_representation(σz(coordinate_j, f), Hj)
-    σzij = tensor_product((σzi, σzj), (Hi, Hj) => Hij)
-
-    S_ij = 1 / 4 * (σxij + σyij + σzij)
-
-    return embed(S_ij, Hij => H)
+function Sij(coordinate_i, coordinate_j, H)
+    Hi = hilbert_space(labels((coordinate_i,)), NumberConservation(1))
+    Hj = hilbert_space(labels((coordinate_j,)), NumberConservation(1))
+    ps = pauli_strings((Hi, Hj), H)
+    1 / 4 * sum(ps[((coordinate_i, σ), (coordinate_j, σ))] for σ in [:σx, :σy, :σz])
 end
 
 # S^2 operator 

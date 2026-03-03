@@ -2,11 +2,7 @@ abstract type AbstractPropagatorAlg end
 struct BlockPropagatorAlg <: AbstractPropagatorAlg end
 
 function scrambling_map(H_main, H_reservoir, H_total, measurements, ψres, hamiltonian, t, ::BlockPropagatorAlg)
-    ρ_res = if ψres isa AbstractVector
-        ψres * ψres'
-    else
-        ψres
-    end
+    ρ_res = density_matrix(ψres)
     U = propagator(t, hamiltonian)
     measurements_t = map(m -> operator_time_evolution(U, m), measurements)
     eff_measurements = map(mt -> effective_measurement(mt, ρ_res, H_main, H_reservoir, H_total), measurements_t)
@@ -35,5 +31,5 @@ function scrambling_map(H_main, H_reservoir, H_total, measurements, ψres::Abstr
     stack(op -> vec(U' * Diagonal(op) * U), measurements)'
 end
 
-scrambling_map(sys:: QuantumDotSystem, measurements, ψres, hamiltonian, t, alg = PureStatePropagatorAlg()) =
-    scrambling_map(sys.H_main_qn, sys.H_reservoir_qn, sys.H_total_qn, measurements, ψres, hamiltonian, t, alg)
+scrambling_map(sys::QuantumDotSystem, measurements, ψres, hamiltonian, t, alg=PureStatePropagatorAlg()) =
+    scrambling_map(sys.H_main, sys.H_reservoir, sys.H_total, measurements, ψres, hamiltonian, t, alg)

@@ -38,44 +38,30 @@ end
 
 werner_state(state_name, p, H, f) = (1 - p) * def_state(state_name, H, f) + p * max_mixed_state(H, f)
 
-function random_qubit_state(coordinate, f)
-    θ = acos(2 * rand() - 1)
-    ϕ = rand() * π * 2
-    return cos(θ / 2) * f[coordinate, :↑]' + exp(im * ϕ) * sin(θ / 2) * f[coordinate, :↓]'
-end
-
-function random_product_state(coordinate_a, coordinate_b, Ha, Hb, Hab, f)
-    va = matrix_representation(random_qubit_state(coordinate_a, f), Ha) * vac_state(Ha)
-    ρa = va * va'
-    vb = matrix_representation(random_qubit_state(coordinate_b, f), Hb) * vac_state(Hb)
-    ρb = vb * vb'
-    return tensor_product((ρa, ρb), (Ha, Hb) => Hab)
-end
-
-function random_separable_state(nbr_states, coordinate_a, coordinate_b, Ha, Hb, Hab, f)
+random_state(H) = normalize!(randn(ComplexF64, dim(H)))
+random_product_state(Hs, H) = generalized_kron(random_state.(Hs), Hs => H)
+random_product_state(sys::QuantumDotSystem) = random_product_state(sys.Hs_main, sys.H_main)
+function random_separable_state(nbr_states, Hs, H)
     p = rand(nbr_states)
     p = p ./ sum(p)
-    ρ_sep = sum(p[i] * random_product_state(coordinate_a, coordinate_b, Ha, Hb, Hab, f) for i ∈ 1:nbr_states)
+    ρ_sep = sum(p[i] * random_product_state(Hs, H) for i ∈ 1:nbr_states)
     return ρ_sep
 end
+random_separable_state(N, sys::QuantumDotSystem) = random_separable_state(N, sys.Hs_main, sys.H_main)
+density_matrix(v::AbstractVector) = v * v'
+density_matrix(ρ::AbstractMatrix) = ρ
 
-random_product_state(qd_system) =
-    random_product_state(qd_system.coordinates_main[1], qd_system.coordinates_main[2], qd_system.H_main_a, qd_system.H_main_b, qd_system.H_main_qn, qd_system.f)
+# function hilbert_schmidt_ensemble(dim)
+#     X = (randn(dim, dim) .+ 1im * randn(dim, dim)) ./ sqrt(2)
+#     ρ = X'X / tr(X'X)
+#     return ρ
+# end
 
-random_separable_state(nbr_states, qd_system) = 
-    random_separable_state(nbr_states, qd_system.coordinates_main[1], qd_system.coordinates_main[2], qd_system.H_main_a, qd_system.H_main_b, qd_system.H_main_qn, qd_system.f)
-
-function hilbert_schmidt_ensamble(dim)
-    X = (randn(dim, dim) .+ 1im * randn(dim, dim)) ./ sqrt(2)
-    ρ = X'X / tr(X'X)
-    return ρ
-end
-
-function random_pure_states(dim)
-    Ψ = (randn(dim) .+ 1im * randn(dim))'
-    ρ = Ψ'Ψ / tr(Ψ'Ψ)
-    return ρ
-end
+# function random_pure_states(dim)
+#     Ψ = (randn(dim) .+ 1im * randn(dim))'
+#     ρ = Ψ'Ψ / tr(Ψ'Ψ)
+#     return ρ
+# end
 ## =============== Ground States ====================
 abstract type DiagonalizationAlg end
 struct ExactDiagonalizationAlg <: DiagonalizationAlg end
@@ -102,7 +88,7 @@ function eig_state(m::AbstractMatrix, n, ::ArnoldiAlg; kwargs...)
     # vals, vecs
 end
 
-ground_state(m, alg = ArnoldiAlg()) = eig_state(m, 1, alg)
+ground_state(m, alg=ArnoldiAlg()) = eig_state(m, 1, alg)
 eig_state(m, n) = eig_state(m, n, ArnoldiAlg())
 
 # Find eigenstate in a qn-sector  
@@ -114,5 +100,5 @@ function eig_state(m::AbstractMatrix{T}, H::AbstractHilbertSpace, H_qn::Abstract
     state[index_qn] = eig_state(m_qn, n, alg)
     return state
 end
-eig_state(m, H::AbstractHilbertSpace, qn::Number, n, alg =ArnoldiAlg()) = eig_state(m, H, sector(qn, H), n, alg)
-ground_state(ham, H::FermionicHilbertSpaces.AbstractHilbertSpace, qn::Int, alg =ArnoldiAlg()) = eig_state(ham, H, sector(qn, H), 1, alg)
+eig_state(m, H::AbstractHilbertSpace, qn::Number, n, alg=ArnoldiAlg()) = eig_state(m, H, sector(qn, H), n, alg)
+ground_state(ham, H::FermionicHilbertSpaces.AbstractHilbertSpace, qn::Int, alg=ArnoldiAlg()) = eig_state(ham, H, sector(qn, H), 1, alg)

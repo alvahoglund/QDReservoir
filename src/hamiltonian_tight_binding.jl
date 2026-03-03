@@ -155,32 +155,34 @@ hamiltonian_interactions_x(interaction_params, coordinates, f) =
 
 function hamiltonians(qd_system, seed=nothing)
     isnothing(seed) || Random.seed!(seed)
-    dot_params_main = default_main_system_dot_params(qd_system.coordinates_main)
-    dot_params_reservoir = default_reservoir_dot_params(qd_system.coordinates_reservoir)
-    interaction_params = default_interaction_params(qd_system.coordinates_total)
+    dot_params_main = default_main_system_dot_params(qd_system.grid.main)
+    dot_params_reservoir = default_reservoir_dot_params(qd_system.grid.res)
+    interaction_params = default_interaction_params(qd_system.grid.total)
     hamiltonians(qd_system, dot_params_main, dot_params_reservoir, interaction_params)
 end
 
 function hamiltonians_equal_param(qd_system)
-    dot_params_main = default_equal_dot_params(qd_system.coordinates_main)
-    dot_params_reservoir = default_equal_dot_params(qd_system.coordinates_reservoir)
-    interaction_params = default_equal_interaction_params(qd_system.coordinates_total)
+    dot_params_main = default_equal_dot_params(qd_system.grid.main)
+    dot_params_reservoir = default_equal_dot_params(qd_system.grid.res)
+    interaction_params = default_equal_interaction_params(qd_system.grid.total)
     hamiltonians(qd_system, dot_params_main, dot_params_reservoir, interaction_params)
 end
 
 function hamiltonians(qd_system, dot_params_main::DotParams, dot_params_reservoir::DotParams, interaction_params::InteractionParams)
-    hamiltonian_main = hamiltonian_dots(dot_params_main, qd_system.coordinates_main, qd_system.f) + hamiltonian_interactions(interaction_params, qd_system.coordinates_main, qd_system.f)
-    hamiltonian_reservoir = hamiltonian_dots(dot_params_reservoir, qd_system.coordinates_reservoir, qd_system.f) + hamiltonian_interactions(interaction_params, qd_system.coordinates_reservoir, qd_system.f)
-    hamiltonian_intersection = hamiltonian_interactions_x(interaction_params, qd_system.coordinates_intersection, qd_system.f)
+    grid = qd_system.grid
+    f = qd_system.f
+    hamiltonian_main = hamiltonian_dots(dot_params_main, grid.main, f) + hamiltonian_interactions(interaction_params, grid.main, f)
+    hamiltonian_reservoir = hamiltonian_dots(dot_params_reservoir, grid.res, f) + hamiltonian_interactions(interaction_params, grid.res, f)
+    hamiltonian_intersection = hamiltonian_interactions_x(interaction_params, grid.intersection, f)
     hamiltonian_total = hamiltonian_main + hamiltonian_reservoir + hamiltonian_intersection
     return Hamiltonians(hamiltonian_main, hamiltonian_reservoir, hamiltonian_intersection, hamiltonian_total,
         dot_params_main, dot_params_reservoir, interaction_params)
 end
 
-function matrix_representation_hams(hams :: Hamiltonians, qd_system)
+function matrix_representation_hams(hams::Hamiltonians, qd_system)
     Hamiltonians(
         matrix_representation(hams.hamiltonian_main, qd_system.H_main),
-        matrix_representation(hams.hamiltonian_reservoir, qd_system.H_reservoir_qn),
+        matrix_representation(hams.hamiltonian_reservoir, qd_system.H_reservoir),
         hams.hamiltonian_intersection,
         matrix_representation(hams.hamiltonian_total, qd_system.H_total_qn),
         hams.dot_params_main,

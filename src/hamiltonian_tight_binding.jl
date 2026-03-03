@@ -184,7 +184,7 @@ function matrix_representation_hams(hams::Hamiltonians, qd_system)
         matrix_representation(hams.hamiltonian_main, qd_system.H_main),
         matrix_representation(hams.hamiltonian_reservoir, qd_system.H_reservoir),
         hams.hamiltonian_intersection,
-        matrix_representation(hams.hamiltonian_total, qd_system.H_total_qn),
+        matrix_representation(hams.hamiltonian_total, qd_system.H_total),
         hams.dot_params_main,
         hams.dot_params_reservoir,
         hams.interaction_params,

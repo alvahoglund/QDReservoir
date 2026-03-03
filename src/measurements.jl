@@ -49,10 +49,15 @@ function charge_measurements(qd_system)
     [matrix_representation(op, qd_system.H_total) for op in symops]
 end
 
-# single_charge_probabilities(coordinates, f) = [p1(coordinate, f) for coordinate in coordinates]
-# double_charge_probabilities(coordinates, f) = [p2(coordinate, f) for coordinate in coordinates]
-# charge_probabilities(coordinates, f) = vcat(single_charge_probabilities(coordinates, f), double_charge_probabilities(coordinates, f))
-
+single_charge_probabilities(coordinates, f) = [p1(coordinate, f) for coordinate in coordinates]
+double_charge_probabilities(coordinates, f) = [p2(coordinate, f) for coordinate in coordinates]
+charge_probabilities(coordinates, f) = vcat(single_charge_probabilities(coordinates, f), double_charge_probabilities(coordinates, f))
+function charge_probabilities(qd_system)
+    coordinates = qd_system.grid.total
+    f = qd_system.f
+    charge_prob_ops = charge_probabilities(coordinates, f)
+    [matrix_representation(op, qd_system.H_total) for op in charge_prob_ops]
+end
 function correlated_measurements(coordinates, qn_total, f)
     valid_combos = get_measurement_combinations(coordinates, qn_total)
     measurement_ops = [measurement_combination_op(coordinates, f, measurement_combo)

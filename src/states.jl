@@ -44,7 +44,7 @@ random_product_state(sys::QuantumDotSystem) = random_product_state(sys.Hs_main, 
 function random_separable_state(nbr_states, Hs, H)
     p = rand(nbr_states)
     p = p ./ sum(p)
-    ρ_sep = sum(p[i] * random_product_state(Hs, H) for i ∈ 1:nbr_states)
+    ρ_sep = sum(p[i] * density_matrix(random_product_state(Hs, H)) for i ∈ 1:nbr_states)
     return ρ_sep
 end
 random_separable_state(N, sys::QuantumDotSystem) = random_separable_state(N, sys.Hs_main, sys.H_main)

@@ -20,7 +20,7 @@ function paulis(H, Hfinal=H)
     X = embed([0 1; 1 0], H => Hfinal)
     Y = embed([0 -im; im 0], H => Hfinal)
     Z = embed([1 0; 0 -1], H => Hfinal)
-    keys = [(x, :σ0), (x, :σx), (x, :σy), (x, :σz)]
+    keys = [:σ0, :σx, :σy, :σz]
     vals = [I, X, Y, Z]
     return Dict(map(Pair, keys, vals))
 end
@@ -32,6 +32,12 @@ function pauli_strings(Hs, Hfinal)
         key => mat
     end
     Dict(pairs)
+end
+function pauli_matrix(Hs, Hfinal)
+    #A matrix where row is a row vectorized pauli matrix:  |σ_i ⊗ σ_j) = vec(σ_i ⊗ σ_j)^†
+    ps = pauli_strings(Hs, Hfinal)
+    paulis_list = [:σ0, :σx, :σy, :σz]
+    vcat([reshape(ps[a, b], 16, 1)' for a in paulis_list for b in paulis_list]...)
 end
 
 process_complex(value, tolerance=1e-3) = abs(imag(value)) < tolerance ? real(value) : throw(ArgumentError("The value has an imaginary part: $(imag(value))"))

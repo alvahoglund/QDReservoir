@@ -18,9 +18,7 @@ function tight_binding_system(nbr_dots_main, nbr_dots_res, qn_reservoir)
     qn_total = qn_reservoir + nbr_dots_main
 
     Hs_main = [hilbert_space(labels((coordinate,)), NumberConservation(1)) for coordinate in grid.main]
-    main_qn = NumberConservation(nbr_dots_main) * prod(number_conservation(==(l) ∘ first) for l in grid.main)
-    H_main = hilbert_space(labels(grid.main), main_qn)
-
+    H_main = tensor_product(Hs_main[1], Hs_main[2])
     H_reservoir = hilbert_space(labels(grid.res), NumberConservation(qn_reservoir))
 
     H_total = hilbert_space(labels(grid.total), NumberConservation(qn_total))

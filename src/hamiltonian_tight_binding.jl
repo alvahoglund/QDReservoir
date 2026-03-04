@@ -181,7 +181,7 @@ end
 
 function matrix_representation_hams(hams::Hamiltonians, qd_system)
     Hamiltonians(
-        matrix_representation(hams.hamiltonian_main, qd_system.H_main),
+        hams.hamiltonian_main,
         matrix_representation(hams.hamiltonian_reservoir, qd_system.H_reservoir),
         hams.hamiltonian_intersection,
         matrix_representation(hams.hamiltonian_total, qd_system.H_total),

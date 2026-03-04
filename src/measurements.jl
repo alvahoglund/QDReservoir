@@ -12,6 +12,7 @@ p0(coordinate, f) = 1 - p1(coordinate, f) - p2(coordinate, f) #Probability to me
 p1(coordinate, f) = nbr_op(coordinate, f) - 2 * nbr2_op(coordinate, f) # Probability to measure 1 charge
 p2(coordinate, f) = nbr2_op(coordinate, f) # Probability to measure 2 charges
 
+const PauliKeys = (:σ0, :σx, :σy, :σz)
 function paulis(H, Hfinal=H)
     dim(H) == 2 || throw(ArgumentError("Paulis is only defined for 2-dimensional Hilbert spaces"))
     coords = sites(H)
@@ -20,9 +21,8 @@ function paulis(H, Hfinal=H)
     X = embed([0 1; 1 0], H => Hfinal)
     Y = embed([0 -im; im 0], H => Hfinal)
     Z = embed([1 0; 0 -1], H => Hfinal)
-    keys = [:σ0, :σx, :σy, :σz]
     vals = [I, X, Y, Z]
-    return Dict(map(Pair, keys, vals))
+    return Dict(map(Pair, PauliKeys, vals))
 end
 function pauli_strings(Hs, Hfinal)
     ps = map(H -> collect(paulis(H, Hfinal)), Hs)
@@ -36,8 +36,9 @@ end
 function pauli_matrix(Hs, Hfinal)
     #A matrix where row is a row vectorized pauli matrix:  |σ_i ⊗ σ_j) = vec(σ_i ⊗ σ_j)^†
     ps = pauli_strings(Hs, Hfinal)
-    paulis_list = [:σ0, :σx, :σy, :σz]
-    vcat([reshape(ps[a, b], 16, 1)' for a in paulis_list for b in paulis_list]...)
+    P = stack(vec, ps[a, b] for a in PauliKeys for b in PauliKeys)
+    # each column of P is a vectorized Pauli string
+    return transpose(P)
 end
 
 process_complex(value, tolerance=1e-3) = abs(imag(value)) < tolerance ? real(value) : throw(ArgumentError("The value has an imaginary part: $(imag(value))"))

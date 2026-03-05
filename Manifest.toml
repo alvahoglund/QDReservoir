@@ -1,6 +1,6 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.12.5"
+julia_version = "1.12.4"
 manifest_format = "2.0"
 project_hash = "317fd337549534e90516df77b80fcdfc931f8f18"
 
@@ -405,11 +405,9 @@ version = "1.1.0"
 
 [[deps.FermionicHilbertSpaces]]
 deps = ["BitPermutations", "Dictionaries", "FillArrays", "FlexiGroups", "LinearAlgebra", "NonCommutativeProducts", "OrderedCollections", "PrecompileTools", "SparseArrays", "TestItems", "TupleTools", "UUIDs"]
-git-tree-sha1 = "9cfe2c5874fa72c4bf81007edb46dbc75f4060eb"
-repo-rev = "faster-partial-trace-for-sparse-operators"
-repo-url = "https://github.com/cvsvensson/FermionicHilbertSpaces.jl"
+git-tree-sha1 = "0cf0b3c78c79ddfbaafea8bfa6021661c38a291e"
 uuid = "82e5dd95-83c3-46b2-a303-acc930c81756"
-version = "0.9.1"
+version = "0.9.3"
 
 [[deps.FileWatching]]
 uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"

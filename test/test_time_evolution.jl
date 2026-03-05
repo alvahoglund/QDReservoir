@@ -21,22 +21,22 @@ end
     seed = 2
     hams = hamiltonians(qd_system, seed)
 
-    ham_res = matrix_representation(hams.hamiltonian_reservoir, qd_system.H_reservoir_qn)
+    ham_res = matrix_representation(hams.hamiltonian_reservoir, qd_system.H_reservoir)
     ψ_res = ground_state(ham_res)
     ρres = ψ_res * ψ_res'
 
-    initial_states = [def_state(triplet_plus, qd_system.H_main_qn, qd_system.f),
-        def_state(singlet, qd_system.H_main_qn, qd_system.f),
+    initial_states = map(density_matrix, [def_state(triplet_plus, qd_system.H_main, qd_system.f),
+        def_state(singlet, qd_system.H_main, qd_system.f),
         random_product_state(qd_system),
-        random_separable_state(3, qd_system)]
+        random_separable_state(3, qd_system)])
 
-    total_states = map(initial_state -> tensor_product((initial_state, ρres), (qd_system.H_main_qn, qd_system.H_reservoir_qn) => qd_system.H_total_qn), initial_states)
-    measurements = map(op -> matrix_representation(op, qd_system.H_total_qn), charge_measurements(qd_system.coordinates_total, qd_system.f))
+    total_states = map(initial_state -> tensor_product((initial_state, ρres), (qd_system.H_main, qd_system.H_reservoir) => qd_system.H_total), initial_states)
+    measurements = charge_measurements(qd_system)
 
     t = 10
-    ham_total = matrix_representation(hams.hamiltonian_total, qd_system.H_total_qn)
+    ham_total = matrix_representation(hams.hamiltonian_total, qd_system.H_total)
 
-    time_evolved_states = map(total_state -> state_time_evolution(total_state,t, ham_total), total_states)
+    time_evolved_states = map(total_state -> state_time_evolution(total_state, t, ham_total), total_states)
     time_evolved_measurements = map(measurement -> operator_time_evolution(measurement, t, ham_total), measurements)
     effective_measurements = map(measurement -> effective_measurement(measurement, ρres, qd_system), time_evolved_measurements)
     scrambling_block = scrambling_map(qd_system, measurements, ψ_res, ham_total, t, QDR.BlockPropagatorAlg())

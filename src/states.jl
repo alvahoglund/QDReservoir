@@ -51,17 +51,13 @@ random_separable_state(N, sys::QuantumDotSystem) = random_separable_state(N, sys
 density_matrix(v::AbstractVector) = v * v'
 density_matrix(ρ::AbstractMatrix) = ρ
 
-# function hilbert_schmidt_ensemble(dim)
-#     X = (randn(dim, dim) .+ 1im * randn(dim, dim)) ./ sqrt(2)
-#     ρ = X'X / tr(X'X)
-#     return ρ
-# end
+function hilbert_schmidt_ensemble(H)
+    d = dim(H)
+    X = randn(d, d)
+    ρ = X'X / tr(X'X)
+    return ρ
+end
 
-# function random_pure_states(dim)
-#     Ψ = (randn(dim) .+ 1im * randn(dim))'
-#     ρ = Ψ'Ψ / tr(Ψ'Ψ)
-#     return ρ
-# end
 ## =============== Ground States ====================
 abstract type DiagonalizationAlg end
 struct ExactDiagonalizationAlg <: DiagonalizationAlg end

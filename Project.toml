@@ -6,9 +6,11 @@ authors = ["Alva Höglund", "Viktor Svensson"]
 [deps]
 ArnoldiMethod = "ec485272-7323-5ecc-a04f-4719b315124d"
 Arpack = "7d9fca2a-8960-54d3-9f78-7d1dccf2cb97"
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 ExponentialUtilities = "d4d017d3-3776-5f7e-afef-a10c40355c18"
 FermionicHilbertSpaces = "82e5dd95-83c3-46b2-a303-acc930c81756"
+GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
 IJulia = "7073ff75-c697-5162-941a-fcdaad2a7d2a"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 LinearMaps = "7a12625a-238d-50fd-b39a-03d52299707e"
@@ -25,7 +27,9 @@ TestItems = "1c621080-faea-4a02-84b6-bbd5e436b8fe"
 
 [compat]
 ArnoldiMethod = "0.4.0"
+CairoMakie = "0.15.9"
 ExponentialUtilities = "1.30.0"
 FermionicHilbertSpaces = "0.9.1"
+GLMakie = "0.13.9"
 Reexport = "1.2.2"
 Test = "1.11.0"

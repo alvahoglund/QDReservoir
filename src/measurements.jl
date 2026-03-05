@@ -34,7 +34,6 @@ function pauli_strings(Hs, Hfinal)
     Dict(pairs)
 end
 function pauli_matrix(Hs, Hfinal)
-    #A matrix where row is a row vectorized pauli matrix:  |σ_i ⊗ σ_j) = vec(σ_i ⊗ σ_j)^†
     ps = pauli_strings(Hs, Hfinal)
     P = stack(vec, ps[a, b] for a in PauliKeys for b in PauliKeys)
     # each column of P is a vectorized Pauli string
@@ -42,7 +41,7 @@ function pauli_matrix(Hs, Hfinal)
 end
 
 process_complex(value, tolerance=1e-3) = abs(imag(value)) < tolerance ? real(value) : throw(ArgumentError("The value has an imaginary part: $(imag(value))"))
-expectation_value(ρ, op) = process_complex((tr(ρ * op)))
+expectation_value(ρ, op::AbstractMatrix) = process_complex((tr(density_matrix(ρ) * op)))
 variance(ρ, op) = expectation_value(ρ, op^2) - expectation_value(ρ, op)^2
 
 ## ======== Measurement sets =================
@@ -98,7 +97,7 @@ end
 # S^2 operator 
 function total_spin_op(coordinates, f, H)
     S2_op = sum([Si2(coordinate, f, H) for coordinate in coordinates])
-    Sij_op = sum([Sij(coordinate_i, coordinate_j, f, H)
+    Sij_op = sum([Sij(coordinate_i, coordinate_j, H)
                   for (i, coordinate_i) in enumerate(coordinates)
                   for (j, coordinate_j) in enumerate(coordinates)
                   if i < j])

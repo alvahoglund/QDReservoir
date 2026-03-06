@@ -23,9 +23,7 @@ function def_state(state_name, H, f)
     if ismissing(vac_ind)
         v = v[1:end-1]
     end
-    ρ = v * v'
-    ρ = ρ / norm(ρ)
-    return ρ
+    return normalize!(v)
 end
 
 

@@ -100,8 +100,8 @@ function total_spin_op(coordinates, f, H)
     Sij_op = sum((Sij(coordinate_i, coordinate_j, H)
                   for (i, coordinate_i) in enumerate(coordinates)
                   for (j, coordinate_j) in enumerate(coordinates)
-                  if i < j), 
-                    init = zero(S2_op))
+                  if i < j),
+        init=zero(S2_op))
     return S2_op + 2 * Sij_op
 end
 

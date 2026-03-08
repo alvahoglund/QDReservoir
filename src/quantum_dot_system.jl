@@ -40,3 +40,5 @@ function generate_grid(nbr_dots_main::Int, nbr_dots_reservoir::Int)
     coordinates_intersection = vcat(coordinates_main, [coordinate for coordinate in coordinates_reservoir if coordinate[1] == 2])
     return (; main=coordinates_main, res=coordinates_reservoir, total=coordinates_total, intersection=coordinates_intersection)
 end
+
+qn_sector(H::SymmetricFockHilbertSpace) = H.symmetry.conserved_quantity.sectors[1]

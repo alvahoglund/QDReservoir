@@ -91,16 +91,17 @@ function Sij(coordinate_i, coordinate_j, H)
     Hi = hilbert_space(labels((coordinate_i,)), NumberConservation(1))
     Hj = hilbert_space(labels((coordinate_j,)), NumberConservation(1))
     ps = pauli_strings((Hi, Hj), H)
-    1 / 4 * sum(ps[((coordinate_i, σ), (coordinate_j, σ))] for σ in [:σx, :σy, :σz])
+    1 / 4 * sum(ps[σ, σ] for σ in [:σx, :σy, :σz])
 end
 
 # S^2 operator 
 function total_spin_op(coordinates, f, H)
     S2_op = sum([Si2(coordinate, f, H) for coordinate in coordinates])
-    Sij_op = sum([Sij(coordinate_i, coordinate_j, H)
+    Sij_op = sum((Sij(coordinate_i, coordinate_j, H)
                   for (i, coordinate_i) in enumerate(coordinates)
                   for (j, coordinate_j) in enumerate(coordinates)
-                  if i < j])
+                  if i < j),
+        init=zero(S2_op))
     return S2_op + 2 * Sij_op
 end
 

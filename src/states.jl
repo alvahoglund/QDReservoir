@@ -51,7 +51,7 @@ density_matrix(ρ::AbstractMatrix) = ρ
 
 function hilbert_schmidt_ensemble(H)
     d = dim(H)
-    X = randn(d, d)
+    X = randn(ComplexF64, d, d)
     ρ = X'X / tr(X'X)
     return ρ
 end

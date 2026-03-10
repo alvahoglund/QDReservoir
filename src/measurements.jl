@@ -34,10 +34,11 @@ function pauli_strings(Hs, Hfinal)
     Dict(pairs)
 end
 function pauli_matrix(Hs, Hfinal)
+    # each column of P is a vectorized Pauli string
     ps = pauli_strings(Hs, Hfinal)
     P = stack(vec, ps[a, b] for a in PauliKeys for b in PauliKeys)
-    # each column of P is a vectorized Pauli string
-    return transpose(P)
+    pauli_indices = Dict((a, b) => i for (i, (a, b)) in enumerate(Iterators.product(PauliKeys, PauliKeys)))
+    return P, pauli_indices
 end
 
 process_complex(value, tolerance=1e-3) = abs(imag(value)) < tolerance ? real(value) : throw(ArgumentError("The value has an imaginary part: $(imag(value))"))

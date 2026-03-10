@@ -1,7 +1,7 @@
 abstract type AbstractPropagatorAlg end
 struct BlockPropagatorAlg <: AbstractPropagatorAlg end
 
-function scrambling_map(H_main, H_reservoir, H_total, measurements, ψres, hamiltonian, t, ::BlockPropagatorAlg)
+function scrambling_map(H_main, H_reservoir, H_total, measurements, ψres, hamiltonian, t::Number, ::BlockPropagatorAlg)
     # H_main = sector((2, (1, 1)), _H_main)
     ρ_res = density_matrix(ψres)
     U = propagator(t, hamiltonian)
@@ -15,7 +15,7 @@ struct PureStatePropagatorAlg <: AbstractPropagatorAlg
     tol::Float64
 end
 PureStatePropagatorAlg(; krylov_dim=200, tol=1e-6) = PureStatePropagatorAlg(krylov_dim, tol)
-function scrambling_map(H_main, H_reservoir, H_total, measurements, ψres::AbstractVector, hamiltonian, t, alg::PureStatePropagatorAlg)
+function scrambling_map(H_main, H_reservoir, H_total, measurements, ψres::AbstractVector, hamiltonian, t::Number, alg::PureStatePropagatorAlg)
     # H_main = sector((2, (1, 1)), _H_main)
     iH = -im .* hamiltonian
     N = dim(H_total)
@@ -31,6 +31,9 @@ function scrambling_map(H_main, H_reservoir, H_total, measurements, ψres::Abstr
     end
     stack(op -> vec(U' * Diagonal(op) * U), measurements)'
 end
+
+scrambling_map(H_main, H_reservoir, H_total, measurements, ψres, hamiltonian, t::AbstractArray, alg) =
+    mapreduce(ti -> scrambling_map(H_main, H_reservoir, H_total, measurements, ψres, hamiltonian, ti, alg), vcat, t)
 
 scrambling_map(sys::QuantumDotSystem, measurements, ψres, hamiltonian, t, alg=PureStatePropagatorAlg()) =
     scrambling_map(sys.H_main, sys.H_reservoir, sys.H_total, measurements, ψres, hamiltonian, t, alg)

@@ -3,12 +3,14 @@ using LinearAlgebra, Random, Arpack, SparseArrays, LinearMaps
 using ExponentialUtilities
 using Reexport
 @reexport using FermionicHilbertSpaces
-@reexport using FermionicHilbertSpaces: indices, sector, AbstractHilbertSpace, NonCommutativeProducts
+@reexport using FermionicHilbertSpaces: indices, sector, AbstractHilbertSpace,
+                                        NonCommutativeProducts
 
 using Distributions: Normal
 
 export tight_binding_system, hamiltonians, hamiltonian_dots, hamiltonian_interactions
-export random_separable_state, random_product_state, triplet_plus, singlet, ground_state, def_state, density_matrix
+export random_separable_state, random_product_state, triplet_plus, singlet, ground_state,
+       def_state, density_matrix
 export charge_measurements, effective_measurement, scrambling_map, expectation_value
 export state_time_evolution, operator_time_evolution
 export set_dot_params, set_interaction_params

@@ -4,8 +4,12 @@
 σy(i, f) = im * (f[i, :↓]' * f[i, :↑] - f[i, :↑]' * f[i, :↓])
 σz(i, f) = (f[i, :↑]' * f[i, :↑] - f[i, :↓]' * f[i, :↓])
 
-nbr_op(coordinate, f) = f[coordinate, :↑]' * f[coordinate, :↑] + f[coordinate, :↓]' * f[coordinate, :↓]
-nbr2_op(coordinate, f) = f[coordinate, :↑]' * f[coordinate, :↑] * f[coordinate, :↓]' * f[coordinate, :↓]
+function nbr_op(coordinate, f)
+    f[coordinate, :↑]' * f[coordinate, :↑] + f[coordinate, :↓]' * f[coordinate, :↓]
+end
+function nbr2_op(coordinate, f)
+    f[coordinate, :↑]' * f[coordinate, :↑] * f[coordinate, :↓]' * f[coordinate, :↓]
+end
 
 p(nbr_index, coordinate, f) = eval(Expr(:call, Symbol("p", nbr_index), coordinate, f))
 p0(coordinate, f) = 1 - p1(coordinate, f) - p2(coordinate, f) #Probability to measure 0 charge
@@ -13,8 +17,9 @@ p1(coordinate, f) = nbr_op(coordinate, f) - 2 * nbr2_op(coordinate, f) # Probabi
 p2(coordinate, f) = nbr2_op(coordinate, f) # Probability to measure 2 charges
 
 const PauliKeys = (:σ0, :σx, :σy, :σz)
-function paulis(H, Hfinal=H)
-    dim(H) == 2 || throw(ArgumentError("Paulis is only defined for 2-dimensional Hilbert spaces"))
+function paulis(H, Hfinal = H)
+    dim(H) == 2 ||
+        throw(ArgumentError("Paulis is only defined for 2-dimensional Hilbert spaces"))
     coords = sites(H)
     x = only(coords)
     I = embed([1 0; 0 1], H => Hfinal)
@@ -37,11 +42,15 @@ function pauli_matrix(Hs, Hfinal)
     # each column of P is a vectorized Pauli string
     ps = pauli_strings(Hs, Hfinal)
     P = stack(vec, ps[a, b] for a in PauliKeys for b in PauliKeys)
-    pauli_indices = Dict((a, b) => i for (i, (a, b)) in enumerate(Iterators.product(PauliKeys, PauliKeys)))
+    pauli_indices = Dict((a, b) => i
+    for (i, (a, b)) in enumerate(Iterators.product(PauliKeys, PauliKeys)))
     return P, pauli_indices
 end
 
-process_complex(value, tolerance=1e-3) = abs(imag(value)) < tolerance ? real(value) : throw(ArgumentError("The value has an imaginary part: $(imag(value))"))
+function process_complex(value, tolerance = 1e-3)
+    abs(imag(value)) < tolerance ? real(value) :
+    throw(ArgumentError("The value has an imaginary part: $(imag(value))"))
+end
 expectation_value(ρ, op::AbstractMatrix) = process_complex((tr(density_matrix(ρ) * op)))
 variance(ρ, op) = expectation_value(ρ, op^2) - expectation_value(ρ, op)^2
 
@@ -56,9 +65,16 @@ function charge_measurements(qd_system)
     [matrix_representation(op, qd_system.H_total) for op in symops]
 end
 
-single_charge_probabilities(coordinates, f) = [p1(coordinate, f) for coordinate in coordinates]
-double_charge_probabilities(coordinates, f) = [p2(coordinate, f) for coordinate in coordinates]
-charge_probabilities(coordinates, f) = vcat(single_charge_probabilities(coordinates, f), double_charge_probabilities(coordinates, f))
+function single_charge_probabilities(coordinates, f)
+    [p1(coordinate, f) for coordinate in coordinates]
+end
+function double_charge_probabilities(coordinates, f)
+    [p2(coordinate, f) for coordinate in coordinates]
+end
+function charge_probabilities(coordinates, f)
+    vcat(single_charge_probabilities(coordinates, f),
+        double_charge_probabilities(coordinates, f))
+end
 function charge_probabilities(qd_system)
     coordinates = qd_system.grid.total
     f = qd_system.f
@@ -79,8 +95,12 @@ function get_measurement_combinations(coordinates, qn_total)
                     if qn_total == sum(measurement_combo)]
     return valid_combos
 end
-measurement_combination_op(coordinates, f, measurement_combo) = prod([p(measurement_combo[i], coord, f) for (i, coord) in enumerate(coordinates)])
-correlated_measurements(qd_system) = correlated_measurements(qd_system.grid.total, qd_system.qn_total, qd_system.f)
+function measurement_combination_op(coordinates, f, measurement_combo)
+    prod([p(measurement_combo[i], coord, f) for (i, coord) in enumerate(coordinates)])
+end
+function correlated_measurements(qd_system)
+    correlated_measurements(qd_system.grid.total, qd_system.qn_total, qd_system.f)
+end
 
 ## ============= Spin measurements ======================
 
@@ -98,11 +118,12 @@ end
 # S^2 operator 
 function total_spin_op(coordinates, f, H)
     S2_op = sum([Si2(coordinate, f, H) for coordinate in coordinates])
-    Sij_op = sum((Sij(coordinate_i, coordinate_j, H)
-                  for (i, coordinate_i) in enumerate(coordinates)
-                  for (j, coordinate_j) in enumerate(coordinates)
-                  if i < j),
-        init=zero(S2_op))
+    Sij_op = sum(
+        (Sij(coordinate_i, coordinate_j, H)
+        for (i, coordinate_i) in enumerate(coordinates)
+        for (j, coordinate_j) in enumerate(coordinates)
+        if i < j),
+        init = zero(S2_op))
     return S2_op + 2 * Sij_op
 end
 

@@ -44,16 +44,19 @@ end
     @test QDR.s_from_s2(s2_exp) ≈ 1 / 2
 
     #Singlet and triplets
-    s2_func(state) = expectation_value(def_state(state, sys.H_main, sys.f), QDR.total_spin_op(sys.grid.main, sys.f, sys.H_main))
-    s_func(state) = QDR.s_from_s2(expectation_value(def_state(state, sys.H_main, sys.f), QDR.total_spin_op(sys.grid.main, sys.f, sys.H_main)))
-    @test s2_func(QDR.triplet_0) ≈ s2_func(QDR.triplet_minus) ≈ s2_func(QDR.triplet_plus) ≈ 2
+    s2_func(state) = expectation_value(def_state(state, sys.H_main, sys.f),
+        QDR.total_spin_op(sys.grid.main, sys.f, sys.H_main))
+    s_func(state) = QDR.s_from_s2(expectation_value(def_state(state, sys.H_main, sys.f),
+        QDR.total_spin_op(sys.grid.main, sys.f, sys.H_main)))
+    @test s2_func(QDR.triplet_0) ≈ s2_func(QDR.triplet_minus) ≈ s2_func(QDR.triplet_plus) ≈
+          2
     @test s_func(QDR.triplet_0) ≈ s_func(QDR.triplet_minus) ≈ s_func(QDR.triplet_plus) ≈ 1
     @test s2_func(QDR.singlet) ≈ 0
     @test s_func(QDR.singlet) ≈ 0
 
     #Eigenvalues of spin operator
     function allowed_spins_half(qn)
-        iseven(qn) ? (qn/2:-1:0) : (qn/2:-1:1/2)
+        iseven(qn) ? ((qn / 2):-1:0) : ((qn / 2):-1:(1 / 2))
     end
     function allowed_spins(nbr_dots, qn)
         spins = Set{Float64}()
@@ -63,16 +66,16 @@ end
                 union!(spins, allowed_spins_half(s))
             end
         end
-        return sort(collect(spins), rev=true)
+        return sort(collect(spins), rev = true)
     end
 
     S2_list(nbr_dots, qn) = [s * (s + 1) for s in allowed_spins(nbr_dots, qn)]
 
     for nbr_res in 0:3
-        for qn in 0:nbr_res*2
+        for qn in 0:(nbr_res * 2)
             sys = tight_binding_system(2, nbr_res, qn)
             s2_op = QDR.total_spin_op(sys.grid.total, sys.f, sys.H_total)
-            vals = round.(eigen(Matrix(s2_op)).values, digits=4)
+            vals = round.(eigen(Matrix(s2_op)).values, digits = 4)
 
             S2_exp = S2_list(nbr_res + 2, qn + 2)
             @test sort!(unique(abs.(vals))) ≈ sort!(S2_exp)

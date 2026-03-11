@@ -1,11 +1,11 @@
 struct QuantumDotSystem
     grid::Any
 
-    Hs_main::AbstractHilbertSpace
-    H_main::AbstractHilbertSpace
+    Hs_main::Any
+    H_main::Any
 
-    H_reservoir::AbstracHiltHilbertSpace
-    H_total::AbstractHilbertSpace
+    H_reservoir::Any
+    H_total::Any
 
     f::Any
 end

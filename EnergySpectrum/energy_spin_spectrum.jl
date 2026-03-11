@@ -18,7 +18,7 @@ end
 
 function get_spectrum(ham_tot, sys)
     vals, vecs = eigen(Hermitian(Matrix(ham_tot)))
-    s2_op = QDR.total_spin_op(sys.grid.total, sys.f, sys.H_total)
+    s2_op = QDR.total_spin_op(sys.grid.total, sys.H_total)
     s_vals = [QDR.s_from_s2(expectation_value(vecs[:, i], s2_op)) for i in eachindex(vals)]
     return vals, s_vals
 end

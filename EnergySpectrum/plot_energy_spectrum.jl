@@ -17,7 +17,7 @@ function get_ham(
 end
 
 function get_ground_state(hams, sys)
-    ψmain = def_state(singlet, sys.H_main, sys.f)
+    ψmain = def_state(singlet, sys.H_main)
     ψres = ground_state(hams.hamiltonian_reservoir)
     ψtot = generalized_kron((ψmain, ψres), (sys.H_main, sys.H_reservoir) => sys.H_total)
     E_exp = QDR.expectation_value(ψtot, hams.hamiltonian_total)

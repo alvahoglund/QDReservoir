@@ -1,3 +1,4 @@
+const f = FermionicHilbertSpaces.SymbolicFermionBasis(:f, 0)
 struct QuantumDotSystem
     grid::Any
 
@@ -6,8 +7,6 @@ struct QuantumDotSystem
 
     H_reservoir::Any
     H_total::Any
-
-    f::Any
 end
 
 function labels(coordinates)
@@ -26,11 +25,8 @@ function tight_binding_system(nbr_dots_main, nbr_dots_res, qn_reservoir)
 
     H_total = hilbert_space(labels(grid.total), NumberConservation(qn_total))
 
-    @fermions f
-
     QuantumDotSystem(grid,
-        Hs_main, H_main, H_reservoir, H_total,
-        f)
+        Hs_main, H_main, H_reservoir, H_total)
 end
 
 function generate_grid(nbr_dots_main::Int, nbr_dots_reservoir::Int)

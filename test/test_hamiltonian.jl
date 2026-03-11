@@ -33,9 +33,9 @@ end
     hams_sum = hamiltonians(
         qd_system, main_system_dot_params, reservoir_dot_params, interaction_params)
 
-    ham_total = hamiltonian_dots(total_dot_params, qd_system.grid.total, qd_system.f) +
+    ham_total = hamiltonian_dots(total_dot_params, qd_system.grid.total) +
                 hamiltonian_interactions(
-        interaction_params, qd_system.grid.total, qd_system.f)
+        interaction_params, qd_system.grid.total)
 
     @test matrix_representation(hams_sum.hamiltonian_total, qd_system.H_total) ≈
           matrix_representation(ham_total, qd_system.H_total)

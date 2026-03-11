@@ -22,14 +22,14 @@ end
 
 ## ============ Singel dot ================
 
-function hamiltonian_ϵ(ϵ, u_intra, coordinate_labels, f)
+function hamiltonian_ϵ(ϵ, u_intra, coordinate_labels)
     sum(
         (ϵ[label] - u_intra[label] / 2) * f[label, σ]' * f[label, σ]
         for σ in [:↑, :↓], label in coordinate_labels;
         init = 0
     )
 end
-function hamiltonian_b(ϵb, coordinate_labels, f)
+function hamiltonian_b(ϵb, coordinate_labels)
     sum(
         #1/2 as normalization factor for pauli matrices
         1 / 2 * ϵb[label][1] * (f[label, :↑]'f[label, :↓] + f[label, :↓]'f[label, :↑]) + # Bx
@@ -41,7 +41,7 @@ function hamiltonian_b(ϵb, coordinate_labels, f)
     )
 end
 
-function hamiltonian_c_intra(u_intra, coordinate_labels, f)
+function hamiltonian_c_intra(u_intra, coordinate_labels)
     sum(
         u_intra[label] * f[label, :↑]'f[label, :↓]'f[label, :↓]f[label, :↑]
         for label in coordinate_labels;
@@ -51,12 +51,12 @@ end
 
 ## ============ Interactions ================
 
-function hamiltonian_c_inter(u_inter, coordinate_labels, f)
-    hamiltonian_c_inter_x(u_inter, coordinate_labels, f) +
-    hamiltonian_c_inter_y(u_inter, coordinate_labels, f)
+function hamiltonian_c_inter(u_inter, coordinate_labels)
+    hamiltonian_c_inter_x(u_inter, coordinate_labels) +
+    hamiltonian_c_inter_y(u_inter, coordinate_labels)
 end
 
-function hamiltonian_c_inter_x(u_inter, coordinate_labels, f)
+function hamiltonian_c_inter_x(u_inter, coordinate_labels)
     sum(
         u_inter[(i, j), (i + 1, j)] *
         f[(i, j), σ1]'f[(i + 1, j), σ2]'f[(i + 1, j), σ2]f[(i, j), σ1]
@@ -65,7 +65,7 @@ function hamiltonian_c_inter_x(u_inter, coordinate_labels, f)
         init = 0
     )
 end
-function hamiltonian_c_inter_y(u_inter, coordinate_labels, f)
+function hamiltonian_c_inter_y(u_inter, coordinate_labels)
     sum(
         u_inter[(i, j), (i, j + 1)] *
         f[(i, j), σ1]'f[(i, j + 1), σ2]'f[(i, j + 1), σ2]f[(i, j), σ1]
@@ -75,18 +75,18 @@ function hamiltonian_c_inter_y(u_inter, coordinate_labels, f)
     )
 end
 
-function hamiltonian_t(t, coordinate_labels, f)
-    hamiltonian_t_x(t, coordinate_labels, f) + hamiltonian_t_y(t, coordinate_labels, f)
+function hamiltonian_t(t, coordinate_labels)
+    hamiltonian_t_x(t, coordinate_labels) + hamiltonian_t_y(t, coordinate_labels)
 end
 
-function hamiltonian_t_x(t, coordinate_labels, f)
+function hamiltonian_t_x(t, coordinate_labels)
     sum(
         t[(i, j), (i + 1, j)]f[(i + 1, j), σ]'f[(i, j), σ] + hc
         for σ in [:↑, :↓], (i, j) in coordinate_labels if (i + 1, j) in coordinate_labels;
         init = 0
     )
 end
-function hamiltonian_t_y(t, coordinate_labels, f)
+function hamiltonian_t_y(t, coordinate_labels)
     sum(
         t[(i, j), (i, j + 1)]f[(i, j + 1), σ]'f[(i, j), σ] + hc
         for σ in [:↑, :↓], (i, j) in coordinate_labels if (i, j + 1) in coordinate_labels;
@@ -94,12 +94,12 @@ function hamiltonian_t_y(t, coordinate_labels, f)
     )
 end
 
-function hamiltonian_so(t_so, coordinate_labels, f)
-    hamiltonian_so_x(t_so, coordinate_labels, f) +
-    hamiltonian_so_y(t_so, coordinate_labels, f)
+function hamiltonian_so(t_so, coordinate_labels)
+    hamiltonian_so_x(t_so, coordinate_labels) +
+    hamiltonian_so_y(t_so, coordinate_labels)
 end
 
-function hamiltonian_so_x(t_so, coordinate_labels, f)
+function hamiltonian_so_x(t_so, coordinate_labels)
     sum(
         t_so[(i, j), (i + 1, j)] *
         (-f[(i + 1, j), :↑]'f[(i, j), :↓] + f[(i + 1, j), :↓]'f[(i, j), :↑]) + hc
@@ -107,7 +107,7 @@ function hamiltonian_so_x(t_so, coordinate_labels, f)
         init = 0
     )
 end
-function hamiltonian_so_y(t_so, coordinate_labels, f)
+function hamiltonian_so_y(t_so, coordinate_labels)
     sum(
         t_so[(i, j), (i, j + 1)] *
         (im * f[(i, j + 1), :↑]'f[(i, j), :↓] + im * f[(i, j + 1), :↓]'f[(i, j), :↑]) + hc
@@ -181,22 +181,22 @@ end
 
 ## ========= System Hamiltonians =============
 
-function hamiltonian_dots(dot_params, coordinates, f)
-    hamiltonian_ϵ(dot_params.ϵ, dot_params.u_intra, coordinates, f) +
-    hamiltonian_b(dot_params.ϵb, coordinates, f) +
-    hamiltonian_c_intra(dot_params.u_intra, coordinates, f)
+function hamiltonian_dots(dot_params, coordinates)
+    hamiltonian_ϵ(dot_params.ϵ, dot_params.u_intra, coordinates) +
+    hamiltonian_b(dot_params.ϵb, coordinates) +
+    hamiltonian_c_intra(dot_params.u_intra, coordinates)
 end
 
-function hamiltonian_interactions(interaction_params, coordinates, f)
-    hamiltonian_t(interaction_params.t, coordinates, f) +
-    hamiltonian_so(interaction_params.t_so, coordinates, f) +
-    hamiltonian_c_inter(interaction_params.u_inter, coordinates, f)
+function hamiltonian_interactions(interaction_params, coordinates)
+    hamiltonian_t(interaction_params.t, coordinates) +
+    hamiltonian_so(interaction_params.t_so, coordinates) +
+    hamiltonian_c_inter(interaction_params.u_inter, coordinates)
 end
 
-function hamiltonian_interactions_x(interaction_params, coordinates, f)
-    hamiltonian_t_x(interaction_params.t, coordinates, f) +
-    hamiltonian_so_x(interaction_params.t_so, coordinates, f) +
-    hamiltonian_c_inter_x(interaction_params.u_inter, coordinates, f)
+function hamiltonian_interactions_x(interaction_params, coordinates)
+    hamiltonian_t_x(interaction_params.t, coordinates) +
+    hamiltonian_so_x(interaction_params.t_so, coordinates) +
+    hamiltonian_c_inter_x(interaction_params.u_inter, coordinates)
 end
 
 function hamiltonians(qd_system, seed = nothing)
@@ -218,13 +218,12 @@ function hamiltonians(
         qd_system, dot_params_main::DotParams, dot_params_reservoir::DotParams,
         interaction_params::InteractionParams)
     grid = qd_system.grid
-    f = qd_system.f
-    hamiltonian_main = hamiltonian_dots(dot_params_main, grid.main, f) +
-                       hamiltonian_interactions(interaction_params, grid.main, f)
-    hamiltonian_reservoir = hamiltonian_dots(dot_params_reservoir, grid.res, f) +
-                            hamiltonian_interactions(interaction_params, grid.res, f)
+    hamiltonian_main = hamiltonian_dots(dot_params_main, grid.main) +
+                       hamiltonian_interactions(interaction_params, grid.main)
+    hamiltonian_reservoir = hamiltonian_dots(dot_params_reservoir, grid.res) +
+                            hamiltonian_interactions(interaction_params, grid.res)
     hamiltonian_intersection = hamiltonian_interactions_x(
-        interaction_params, grid.intersection, f)
+        interaction_params, grid.intersection)
     hamiltonian_total = hamiltonian_main + hamiltonian_reservoir + hamiltonian_intersection
     return Hamiltonians(hamiltonian_main, hamiltonian_reservoir,
         hamiltonian_intersection, hamiltonian_total,

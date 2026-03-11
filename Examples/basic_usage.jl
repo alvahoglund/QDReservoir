@@ -8,7 +8,7 @@ sys = QDR.tight_binding_system(nbr_dots_main, nbr_dots_res, qn_res)
 hams = QDR.matrix_representation_hams(hamiltonians(sys), sys)
 
 ## SET STATE
-ρ_main = def_state(singlet, sys.H_main, sys.f)
+ρ_main = def_state(singlet, sys.H_main)
 ψ_res = QDR.ground_state(hams.hamiltonian_reservoir)
 ρ_res = ψ_res * ψ_res'
 ρ_tot = tensor_product((ρ_main, ρ_res), (sys.H_main, sys.H_reservoir) => sys.H_total)

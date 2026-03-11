@@ -26,8 +26,8 @@ end
     ρres = ψ_res * ψ_res'
 
     initial_states = map(density_matrix,
-        [def_state(triplet_plus, qd_system.H_main, qd_system.f),
-            def_state(singlet, qd_system.H_main, qd_system.f),
+        [def_state(triplet_plus, qd_system.H_main),
+            def_state(singlet, qd_system.H_main),
             random_product_state(qd_system),
             random_separable_state(3, qd_system)])
 

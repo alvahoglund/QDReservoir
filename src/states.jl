@@ -6,20 +6,20 @@ function vac_state(H)
 end
 
 ## =================== 2 dot main system states =============
-function singlet(f)
+function singlet()
     1 / √2 * (f[(1, 1), :↑]' * f[(1, 2), :↓]' - f[(1, 1), :↓]' * f[(1, 2), :↑]')
 end
-function triplet_0(f)
+function triplet_0()
     1 / √2 * (f[(1, 1), :↑]' * f[(1, 2), :↓]' + f[(1, 1), :↓]' * f[(1, 2), :↑]')
 end
-function triplet_plus(f)
+function triplet_plus()
     1 / √2 * (f[(1, 1), :↑]' * f[(1, 2), :↑]' + f[(1, 1), :↓]' * f[(1, 2), :↓]')
 end
-function triplet_minus(f)
+function triplet_minus()
     1 / √2 * ((f[(1, 1), :↑]' * f[(1, 2), :↑]' - f[(1, 1), :↓]' * f[(1, 2), :↓]'))
 end
 
-function def_state(state_name, H, f)
+function def_state(state_name, H)
     vac_ind = FermionicHilbertSpaces.state_index(FockNumber(0), H)
     H2, v0 = if ismissing(vac_ind)
         Haux = hilbert_space(keys(H), push!(copy(basisstates(H)), FockNumber(UInt(0))))
@@ -27,14 +27,14 @@ function def_state(state_name, H, f)
     else
         H, vac_state(H)
     end
-    v = matrix_representation(state_name(f), H2; projection = true) * v0
+    v = matrix_representation(state_name(), H2; projection = true) * v0
     if ismissing(vac_ind)
         v = v[1:(end - 1)]
     end
     return normalize!(v)
 end
 
-function max_mixed_state(H, f)
+function max_mixed_state(H)
     v0 = vac_state(H)
     states = [matrix_representation(f[(1, 1), σ1]'f[(1, 2), σ2]', H) * v0
               for σ1 in [:↑, :↓], σ2 in [:↑, :↓]]
@@ -42,8 +42,8 @@ function max_mixed_state(H, f)
     return ρ_mixed
 end
 
-function werner_state(state_name, p, H, f)
-    (1 - p) * def_state(state_name, H, f) + p * max_mixed_state(H, f)
+function werner_state(state_name, p, H)
+    (1 - p) * def_state(state_name, H) + p * max_mixed_state(H)
 end
 
 random_state(H) = normalize!(randn(ComplexF64, dim(H)))

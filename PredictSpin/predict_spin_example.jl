@@ -14,7 +14,7 @@ nbr_test = nbr_states - nbr_train
 
 # ===================== Charge Measurements, X =============================
 measurements = map(m -> matrix_representation(m, sys.H_total),
-    QDR.single_charge_probabilities(sys.grid.total, sys.f))
+    QDR.single_charge_probabilities(sys.grid.total))
 Ω = stack(vec(QDR.hilbert_schmidt_ensemble(sys.H_main)) for i in 1:nbr_states)
 S = scrambling_map(sys, measurements, ground_state(hams.hamiltonian_reservoir),
     hams.hamiltonian_total, [10, 100, 1000])

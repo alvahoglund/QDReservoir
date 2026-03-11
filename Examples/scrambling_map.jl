@@ -32,8 +32,8 @@ sm_block ≈ sm_pure
 ##
 
 # total_states = map(initial_state -> tensor_product((initial_state, ρres), (sys.H_main, sys.H_reservoir) => sys.H_total), initial_states);
-initial_states = [def_state(triplet_plus, sys.H_main, sys.f),
-    def_state(singlet, sys.H_main, sys.f),
+initial_states = [def_state(triplet_plus, sys.H_main),
+    def_state(singlet, sys.H_main),
     random_product_state(sys),
     random_separable_state(3, sys)]
 # time_evolved_states = map(total_state -> state_time_evolution(total_state, t, ham_total, quantum_dot_system.H_total, quantum_dot_system.qn_total), total_states)

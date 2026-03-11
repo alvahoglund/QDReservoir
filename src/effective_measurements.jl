@@ -3,7 +3,6 @@ function effective_measurement(op, ρ_reservoir, H_main, H_reservoir, H_total)
     ρ_res_extend = embed(ρ_reservoir, H_reservoir => H_total)
     partial_trace(op * ρ_res_extend, H_total => H_main,
         alg = FermionicHilbertSpaces.FullPartialTraceAlg(); skipmissing = true)
-    # partial_trace(op * ρ_res_extend, H_total => H_main, alg=FermionicHilbertSpaces.SubsystemPartialTraceAlg())
 end
 
 function effective_measurement(op, ρ_reservoir, qd_system::QuantumDotSystem)

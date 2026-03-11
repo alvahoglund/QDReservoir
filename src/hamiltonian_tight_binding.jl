@@ -61,7 +61,7 @@ function hamiltonian_c_inter_x(u_inter, coordinate_labels, f)
         u_inter[(i, j), (i + 1, j)] *
         f[(i, j), σ1]'f[(i + 1, j), σ2]'f[(i + 1, j), σ2]f[(i, j), σ1]
         for σ1 in [:↑, :↓], σ2 in [:↑, :↓], (i, j) in coordinate_labels
-        if (i + 1, j) ∈ coordinate_labels;
+        if (i + 1, j) in coordinate_labels;
         init = 0
     )
 end
@@ -70,7 +70,7 @@ function hamiltonian_c_inter_y(u_inter, coordinate_labels, f)
         u_inter[(i, j), (i, j + 1)] *
         f[(i, j), σ1]'f[(i, j + 1), σ2]'f[(i, j + 1), σ2]f[(i, j), σ1]
         for σ1 in [:↑, :↓], σ2 in [:↑, :↓], (i, j) in coordinate_labels
-        if (i, j + 1) ∈ coordinate_labels;
+        if (i, j + 1) in coordinate_labels;
         init = 0
     )
 end
@@ -82,14 +82,14 @@ end
 function hamiltonian_t_x(t, coordinate_labels, f)
     sum(
         t[(i, j), (i + 1, j)]f[(i + 1, j), σ]'f[(i, j), σ] + hc
-        for σ in [:↑, :↓], (i, j) in coordinate_labels if (i + 1, j) ∈ coordinate_labels;
+        for σ in [:↑, :↓], (i, j) in coordinate_labels if (i + 1, j) in coordinate_labels;
         init = 0
     )
 end
 function hamiltonian_t_y(t, coordinate_labels, f)
     sum(
         t[(i, j), (i, j + 1)]f[(i, j + 1), σ]'f[(i, j), σ] + hc
-        for σ in [:↑, :↓], (i, j) in coordinate_labels if (i, j + 1) ∈ coordinate_labels;
+        for σ in [:↑, :↓], (i, j) in coordinate_labels if (i, j + 1) in coordinate_labels;
         init = 0
     )
 end
@@ -103,7 +103,7 @@ function hamiltonian_so_x(t_so, coordinate_labels, f)
     sum(
         t_so[(i, j), (i + 1, j)] *
         (-f[(i + 1, j), :↑]'f[(i, j), :↓] + f[(i + 1, j), :↓]'f[(i, j), :↑]) + hc
-        for (i, j) in coordinate_labels if (i + 1, j) ∈ coordinate_labels;
+        for (i, j) in coordinate_labels if (i + 1, j) in coordinate_labels;
         init = 0
     )
 end
@@ -111,7 +111,7 @@ function hamiltonian_so_y(t_so, coordinate_labels, f)
     sum(
         t_so[(i, j), (i, j + 1)] *
         (im * f[(i, j + 1), :↑]'f[(i, j), :↓] + im * f[(i, j + 1), :↓]'f[(i, j), :↑]) + hc
-        for (i, j) in coordinate_labels if (i, j + 1) ∈ coordinate_labels;
+        for (i, j) in coordinate_labels if (i, j + 1) in coordinate_labels;
         init = 0
     )
 end
@@ -137,10 +137,10 @@ end
 function get_coupled_coordinates(coordinates)
     coupled_coordinates_x = [((i, j), (i + 1, j))
                              for (i, j) in coordinates
-                             if (i + 1, j) ∈ coordinates]
+                             if (i + 1, j) in coordinates]
     coupled_coordinates_y = [((i, j), (i, j + 1))
                              for (i, j) in coordinates
-                             if (i, j + 1) ∈ coordinates]
+                             if (i, j + 1) in coordinates]
     return vcat(coupled_coordinates_x, coupled_coordinates_y)
 end
 

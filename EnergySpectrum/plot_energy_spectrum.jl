@@ -6,21 +6,21 @@ using Plots
 function get_ham(
         nbr_dots_res, ϵ_func, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func)
     sys_temp = tight_binding_system(2, nbr_dots_res, 0)
-    main_system_parameters = QDR.set_dot_params(
+    main_system_params = QDR.set_dot_params(
         ϵ_func, ϵb_func, u_intra_func, sys_temp.grid.main)
-    reservoir_parameters = QDR.set_dot_params(
+    res_params = QDR.set_dot_params(
         ϵ_func, ϵb_func, u_intra_func, sys_temp.grid.res)
-    interaction_parameters = QDR.set_interaction_params(
+    interaction_params = QDR.set_interaction_params(
         t_func, t_so_func, u_inter_func, sys_temp.grid.total)
     hamiltonians(
-        sys_temp, main_system_parameters, reservoir_parameters, interaction_parameters)
+        sys_temp, main_system_params, res_params, interaction_params)
 end
 
 function get_ground_state(hams, sys)
     ψmain = def_state(singlet, sys.H_main)
-    ψres = ground_state(hams.hamiltonian_reservoir)
-    ψtot = generalized_kron((ψmain, ψres), (sys.H_main, sys.H_reservoir) => sys.H_total)
-    E_exp = QDR.expectation_value(ψtot, hams.hamiltonian_total)
+    ψres = ground_state(hams.res)
+    ψtot = generalized_kron((ψmain, ψres), (sys.H_main, sys.H_res) => sys.H_total)
+    E_exp = QDR.expectation_value(ψtot, hams.total)
     return ψtot, E_exp
 end
 
@@ -72,7 +72,7 @@ function plot_spectrum(hams_s, nbr_dots_res)
         row, col = get_plot_index(nbr_dots_res, qn_res)
         subplot_idx = (row - 1) * 2 + col
 
-        vals, vecs = eigen(Matrix(hams_m.hamiltonian_total))
+        vals, vecs = eigen(Matrix(hams_m.total))
         ψtot, E_exp = get_ground_state(hams_m, sys)
         c_i2 = energy_amplitudes(ψtot, vecs)
 

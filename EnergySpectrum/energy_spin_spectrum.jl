@@ -6,14 +6,14 @@ using Plots
 function get_ham(
         nbr_dots_res, ϵ_func, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func)
     sys_temp = tight_binding_system(2, nbr_dots_res, 0)
-    main_system_parameters = QDR.set_dot_params(
+    main_system_params = QDR.set_dot_params(
         ϵ_func, ϵb_func, u_intra_func, sys_temp.grid.main)
-    reservoir_parameters = QDR.set_dot_params(
+    res_params = QDR.set_dot_params(
         ϵ_func, ϵb_func, u_intra_func, sys_temp.grid.res)
-    interaction_parameters = QDR.set_interaction_params(
+    interaction_params = QDR.set_interaction_params(
         t_func, t_so_func, u_inter_func, sys_temp.grid.total)
     hamiltonians(
-        sys_temp, main_system_parameters, reservoir_parameters, interaction_parameters)
+        sys_temp, main_system_params, res_params, interaction_params)
 end
 
 function get_spectrum(ham_tot, sys)
@@ -74,6 +74,6 @@ hams = QDR.matrix_representation_hams(
     sys)
 
 pl = plot()
-plot_energy_spin_spectrum_colors(hams.hamiltonian_total, sys, pl)
-#plot_energy_spin_spectrum(hams.hamiltonian_total, sys, pl)
+plot_energy_spin_spectrum_colors(hams.total, sys, pl)
+#plot_energy_spin_spectrum(hams.total, sys, pl)
 display(pl)

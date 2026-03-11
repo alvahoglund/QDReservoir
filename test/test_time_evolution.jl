@@ -21,7 +21,7 @@ end
     seed = 2
     hams = hamiltonians(qd_system, seed)
 
-    ham_res = matrix_representation(hams.hamiltonian_reservoir, qd_system.H_reservoir)
+    ham_res = matrix_representation(hams.res, qd_system.H_res)
     ψ_res = ground_state(ham_res)
     ρres = ψ_res * ψ_res'
 
@@ -33,12 +33,12 @@ end
 
     total_states = map(
         initial_state -> tensor_product((initial_state, ρres),
-            (qd_system.H_main, qd_system.H_reservoir) => qd_system.H_total),
+            (qd_system.H_main, qd_system.H_res) => qd_system.H_total),
         initial_states)
     measurements = charge_measurements(qd_system)
 
     t = 10
-    ham_total = matrix_representation(hams.hamiltonian_total, qd_system.H_total)
+    ham_total = matrix_representation(hams.total, qd_system.H_total)
 
     time_evolved_states = map(
         total_state -> state_time_evolution(total_state, t, ham_total), total_states)

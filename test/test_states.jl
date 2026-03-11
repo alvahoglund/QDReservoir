@@ -5,7 +5,7 @@
     qn_total = 2 + 2
     sys = QDR.tight_binding_system(Nmain, Nres, qn_res)
     hams_symbolic = hamiltonians(sys)
-    hamiltonian_total = matrix_representation(hams_symbolic.hamiltonian_total, sys.H_total)
+    hamiltonian_total = matrix_representation(hams_symbolic.total, sys.H_total)
 
     ψ_arnoldi = ground_state(hamiltonian_total, QDR.ArnoldiAlg())
     ψ_exact = ground_state(hamiltonian_total, QDR.ExactDiagonalizationAlg())

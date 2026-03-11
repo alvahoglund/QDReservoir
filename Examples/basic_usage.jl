@@ -9,12 +9,12 @@ hams = QDR.matrix_representation_hams(hamiltonians(sys), sys)
 
 ## SET STATE
 ρ_main = def_state(singlet, sys.H_main)
-ψ_res = QDR.ground_state(hams.hamiltonian_reservoir)
+ψ_res = QDR.ground_state(hams.res)
 ρ_res = ψ_res * ψ_res'
-ρ_tot = tensor_product((ρ_main, ρ_res), (sys.H_main, sys.H_reservoir) => sys.H_total)
+ρ_tot = tensor_product((ρ_main, ρ_res), (sys.H_main, sys.H_res) => sys.H_total)
 
 ## Measurements
 m_list = QDR.charge_probabilities(sys)
 t = 10
-S = scrambling_map(sys, m_list, ψ_res, hams.hamiltonian_total, t)
+S = scrambling_map(sys, m_list, ψ_res, hams.total, t)
 S * reshape(ρ_main, 16, 1)

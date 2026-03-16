@@ -37,7 +37,7 @@ end
 function max_mixed_state(H)
     v0 = vac_state(H)
     states = [matrix_representation(f[(1, 1), σ1]'f[(1, 2), σ2]', H) * v0
-              for σ1 in [:↑, :↓], σ2 in [:↑, :↓]]
+              for σ1 in SPINS, σ2 in SPINS]
     ρ_mixed = 1 / 2 * sum(state * state' for state in states)
     return ρ_mixed
 end

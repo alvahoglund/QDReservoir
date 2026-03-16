@@ -1,4 +1,5 @@
 const f = FermionicHilbertSpaces.SymbolicFermionBasis(:f, 0)
+const SPINS = (:↑, :↓)
 struct QuantumDotSystem
     grids::Grids
 
@@ -17,7 +18,7 @@ struct Grids
 end
 
 function labels(coordinates)
-    [(coordinate, spin) for coordinate in coordinates for spin in (:↑, :↓)]
+    [(coordinate, spin) for coordinate in coordinates for spin in SPINS]
 end
 
 sites(H) = unique(first.(keys(H)))

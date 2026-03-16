@@ -57,14 +57,14 @@ end
         iseven(qn) ? ((qn / 2):-1:0) : ((qn / 2):-1:(1 / 2))
     end
     function allowed_spins(nbr_dots, qn)
-        spins = Set{Float64}()
+        spins_set = Set{Float64}()
         for d in 0:floor(Int, qn / 2)
             s = qn - 2d
             if s + d <= nbr_dots
-                union!(spins, allowed_spins_half(s))
+                union!(spins_set, allowed_spins_half(s))
             end
         end
-        return sort(collect(spins), rev = true)
+        return sort(collect(spins_set), rev = true)
     end
 
     S2_list(nbr_dots, qn) = [s * (s + 1) for s in allowed_spins(nbr_dots, qn)]

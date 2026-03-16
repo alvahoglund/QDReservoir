@@ -25,7 +25,7 @@ end
 function hamiltonian_ϵ(ϵ, u_intra, grid)
     sum(
         (ϵ[coordinate] - u_intra[coordinate] / 2) * f[coordinate, σ]' * f[coordinate, σ]
-        for σ in [:↑, :↓], coordinate in grid;
+        for σ in SPINS, coordinate in grid;
         init = 0
     )
 end
@@ -64,7 +64,7 @@ function hamiltonian_c_inter_x(u_inter, grid)
     sum(
         u_inter[(i, j), (i + 1, j)] *
         f[(i, j), σ1]'f[(i + 1, j), σ2]'f[(i + 1, j), σ2]f[(i, j), σ1]
-        for σ1 in [:↑, :↓], σ2 in [:↑, :↓], (i, j) in grid
+        for σ1 in SPINS, σ2 in SPINS, (i, j) in grid
         if (i + 1, j) in grid;
         init = 0
     )
@@ -73,7 +73,7 @@ function hamiltonian_c_inter_y(u_inter, grid)
     sum(
         u_inter[(i, j), (i, j + 1)] *
         f[(i, j), σ1]'f[(i, j + 1), σ2]'f[(i, j + 1), σ2]f[(i, j), σ1]
-        for σ1 in [:↑, :↓], σ2 in [:↑, :↓], (i, j) in grid
+        for σ1 in SPINS, σ2 in SPINS, (i, j) in grid
         if (i, j + 1) in grid;
         init = 0
     )
@@ -86,14 +86,14 @@ end
 function hamiltonian_t_x(t, grid)
     sum(
         t[(i, j), (i + 1, j)]f[(i + 1, j), σ]'f[(i, j), σ] + hc
-        for σ in [:↑, :↓], (i, j) in grid if (i + 1, j) in grid;
+        for σ in SPINS, (i, j) in grid if (i + 1, j) in grid;
         init = 0
     )
 end
 function hamiltonian_t_y(t, grid)
     sum(
         t[(i, j), (i, j + 1)]f[(i, j + 1), σ]'f[(i, j), σ] + hc
-        for σ in [:↑, :↓], (i, j) in grid if (i, j + 1) in grid;
+        for σ in SPINS, (i, j) in grid if (i, j + 1) in grid;
         init = 0
     )
 end

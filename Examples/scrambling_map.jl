@@ -2,7 +2,7 @@
 using QDReservoir, LinearAlgebra
 import QDReservoir as QDR
 nbr_dots_main = 2
-nbr_dots_res = 6
+nbr_dots_res = 3
 qn_res = 3
 sys = tight_binding_system(nbr_dots_main, nbr_dots_res, qn_res)
 seed = 2
@@ -40,15 +40,13 @@ initial_states = [def_state(triplet_plus, sys.H_main),
 # time_evolved_states = map(total_state -> state_time_evolution(total_state, t, ham_total, quantum_dot_system.H_total, quantum_dot_system.qn_total), total_states)
 # time_evolved_measurements = map(measurement -> operator_time_evolution(measurement, t, ham_total, quantum_dot_system.qn_total, quantum_dot_system.H_total), measurements)
 # effective_measurements = map(measurement -> effective_measurement(measurement, ρres, quantum_dot_system), time_evolved_measurements)
-@profview sm = scrambling_map(sys, measurements, res_state, ham_total,
-    t, QuantumDotReservoir.FullPropagatorAlg());
-@profview sm = scrambling_map(sys, measurements, res_state, ham_total,
-    t, QuantumDotReservoir.BlockPropagatorAlg());
-@profview sm = scrambling_map(sys, measurements, res_state, ham_total,
-    t, QuantumDotReservoir.KrylovPropagatorAlg());
+@profview sm = scrambling_map(sys, measurements, ψres, hams.total,
+    t, QDR.BlockPropagatorAlg());
+@profview sm = scrambling_map(sys, measurements, ψres, hams.total,
+    t, QDR.PureStatePropagatorAlg());
 
-@time measured_values = map(m -> expectation_value(time_evolved_states[3], m), measurements)
-if nbr_dots_res ≥ 6
-    reshape(inv(sm) * measured_values, 4, 4) ≈ initial_states[3][ind, ind]
-end
-###############
+#@time measured_values = map(m -> expectation_value(time_evolved_states[3], m), measurements)
+#if nbr_dots_res ≥ 6
+#    reshape(inv(sm) * measured_values, 4, 4) ≈ initial_states[3][ind, ind]
+#end
+##############

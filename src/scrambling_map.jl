@@ -5,11 +5,11 @@ function scrambling_map(H_main, H_res, H_total, measurements, ψres,
         hamiltonian, t::Number, ::BlockPropagatorAlg)
     ρ_res = density_matrix(ψres)
     U = propagator(t, hamiltonian)
-    measurements_t = map(m -> operator_time_evolution(U, m), measurements)
+    measurements_t = map(Base.Fix1(operator_time_evolution, U), measurements)
     eff_measurements = map(
         mt -> effective_measurement(mt, ρ_res, H_main, H_res, H_total),
         measurements_t)
-    return vcat([vec(m)' for m in eff_measurements]...)
+    return reduce(vcat, (vec(m)' for m in eff_measurements))
 end
 
 struct PureStatePropagatorAlg <: AbstractPropagatorAlg

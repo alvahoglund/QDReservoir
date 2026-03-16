@@ -55,18 +55,16 @@ expectation_value(ρ, op::AbstractMatrix) = process_complex((tr(density_matrix(�
 variance(ρ, op) = expectation_value(ρ, op^2) - expectation_value(ρ, op)^2
 
 ## ======== Measurement sets =================
-single_charge_probabilities(grid) = [p1(coordinate) for coordinate in grid]
-double_charge_probabilities(grid) = [p2(coordinate) for coordinate in grid]
+single_charge_probabilities(grid) = map(p1, grid)
+double_charge_probabilities(grid) = map(p2, grid)
 
 function charge_probabilities(grid)
-    vcat(single_charge_probabilities(grid),
-        double_charge_probabilities(grid))
+    vcat(single_charge_probabilities(grid), double_charge_probabilities(grid))
 end
 
-single_charge_measurements(grid) = [nbr_op(coordinate) for coordinate in grid]
-function double_charge_measurements(grid)
-    [nbr2_op(coordinate) for coordinate in grid]
-end
+single_charge_measurements(grid) = map(nbr_op, grid)
+double_charge_measurements(grid) = map(nbr2_op, grid)
+
 function charge_measurements(grid)
     vcat(single_charge_measurements(grid), double_charge_measurements(grid))
 end
@@ -84,8 +82,7 @@ end
 
 function correlated_measurements(grid, qn_total)
     valid_combos = get_measurement_combinations(grid, qn_total)
-    measurement_ops = [measurement_combination_op(grid, measurement_combo)
-                       for measurement_combo in valid_combos]
+    measurement_ops = map(Base.Fix1(measurement_combination_op, grid), valid_combos)
     return measurement_ops
 end
 function get_measurement_combinations(grid, qn_total)
@@ -101,7 +98,8 @@ function measurement_combination_op(grid, measurement_combo)
 end
 function correlated_measurements(qd_system)
     matrix_representation_ops(
-        correlated_measurements(qd_system.grids.total, qd_system.qn_total), qd_system.H_total)
+        correlated_measurements(
+            qd_system.grids.total, qn_sector(qd_system.H_total)), qd_system.H_total)
 end
 
 ## ============= Spin measurements ======================

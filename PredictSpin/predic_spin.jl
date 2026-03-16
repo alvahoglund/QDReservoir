@@ -61,7 +61,7 @@ end
 nbr_dots_res = 3
 qn_res = 1
 sys = tight_binding_system(2, nbr_dots_res, qn_res)
-hams = QDR.matrix_representation_hams(QDR.hamiltonians(sys), sys)
+hams = QDR.matrix_representation_hams(QDR.hamiltonians(sys.grids), sys)
 ρ_res = ground_state(hams.res)
 t_list = [10, 20]
 

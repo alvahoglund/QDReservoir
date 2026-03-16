@@ -5,7 +5,7 @@ nbr_dots_main = 2
 nbr_dots_res = 2
 qn_res = 2
 sys = QDR.tight_binding_system(nbr_dots_main, nbr_dots_res, qn_res)
-hams = QDR.matrix_representation_hams(hamiltonians(sys), sys)
+hams = QDR.matrix_representation_hams(hamiltonians(sys.grids), sys)
 
 ## SET STATE
 ρ_main = def_state(singlet, sys.H_main)

@@ -19,7 +19,7 @@ end
     ## Initialize system
     qd_system = tight_binding_system(2, 3, 1)
     seed = 2
-    hams = hamiltonians(qd_system, seed)
+    hams = hamiltonians(qd_system.grids, seed)
 
     ham_res = matrix_representation(hams.res, qd_system.H_res)
     ψ_res = ground_state(ham_res)

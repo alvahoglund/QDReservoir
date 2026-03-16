@@ -6,9 +6,10 @@ nbr_dots_res = 6
 qn_res = 3
 sys = tight_binding_system(nbr_dots_main, nbr_dots_res, qn_res)
 seed = 2
-hams = QDR.matrix_representation_hams(hamiltonians(sys, seed), sys)
+hams = QDR.matrix_representation_hams(hamiltonians(sys.grids, seed), sys)
 ψres = ground_state(hams.res, QDR.ArnoldiAlg())
 measurements = charge_measurements(sys)
+t = 1
 
 @time sm_pure = scrambling_map(sys, measurements, ψres, hams.total, t,
     QDR.PureStatePropagatorAlg(; krylov_dim = 200, tol = 1e-6));

@@ -36,16 +36,16 @@ end
 
     #Single spin
     single_spin = QDR.random_state(sys.Hs_main[1])
-    s2_op = QDR.total_spin_op([sys.grid.main[1]], sys.Hs_main[1])
+    s2_op = QDR.total_spin_op([sys.grids.main[1]], sys.Hs_main[1])
     s2_exp = QDR.expectation_value(single_spin, s2_op)
     @test s2_exp ≈ 3 / 4
     @test QDR.s_from_s2(s2_exp) ≈ 1 / 2
 
     #Singlet and triplets
     s2_func(state) = expectation_value(def_state(state, sys.H_main),
-        QDR.total_spin_op(sys.grid.main, sys.H_main))
+        QDR.total_spin_op(sys.grids.main, sys.H_main))
     s_func(state) = QDR.s_from_s2(expectation_value(def_state(state, sys.H_main),
-        QDR.total_spin_op(sys.grid.main, sys.H_main)))
+        QDR.total_spin_op(sys.grids.main, sys.H_main)))
     @test s2_func(QDR.triplet_0) ≈ s2_func(QDR.triplet_minus) ≈ s2_func(QDR.triplet_plus) ≈
           2
     @test s_func(QDR.triplet_0) ≈ s_func(QDR.triplet_minus) ≈ s_func(QDR.triplet_plus) ≈ 1
@@ -72,7 +72,7 @@ end
     for nbr_res in 0:3
         for qn in 0:(nbr_res * 2)
             sys = tight_binding_system(2, nbr_res, qn)
-            s2_op = QDR.total_spin_op(sys.grid.total, sys.H_total)
+            s2_op = QDR.total_spin_op(sys.grids.total, sys.H_total)
             vals = round.(eigen(Matrix(s2_op)).values, digits = 4)
 
             S2_exp = S2_list(nbr_res + 2, qn + 2)

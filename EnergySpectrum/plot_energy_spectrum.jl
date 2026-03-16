@@ -4,16 +4,15 @@ import QDReservoir as QDR
 using Plots
 
 function get_ham(
-        nbr_dots_res, ϵ_func, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func)
-    sys_temp = tight_binding_system(2, nbr_dots_res, 0)
+        grids, ϵ_func, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func)
     main_system_params = QDR.set_dot_params(
-        ϵ_func, ϵb_func, u_intra_func, sys_temp.grid.main)
+        ϵ_func, ϵb_func, u_intra_func, grids.main)
     res_params = QDR.set_dot_params(
-        ϵ_func, ϵb_func, u_intra_func, sys_temp.grid.res)
+        ϵ_func, ϵb_func, u_intra_func, grids.res)
     interaction_params = QDR.set_interaction_params(
-        t_func, t_so_func, u_inter_func, sys_temp.grid.total)
+        t_func, t_so_func, u_inter_func, grids.total)
     hamiltonians(
-        sys_temp, main_system_params, res_params, interaction_params)
+        grids, main_system_params, res_params, interaction_params)
 end
 
 function get_ground_state(hams, sys)
@@ -94,7 +93,8 @@ u_intra_func() = 10
 t_func() = 1
 t_so_func() = 0
 u_inter_func() = 0
+grids = QDR.generate_grid(2, nbr_dots_res)
 ham_tot = get_ham(
-    nbr_dots_res, ϵ_func, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func)
+    grids, ϵ_func, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func)
 
 plot_spectrum(ham_tot, nbr_dots_res)

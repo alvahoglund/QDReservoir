@@ -55,49 +55,53 @@ expectation_value(ρ, op::AbstractMatrix) = process_complex((tr(density_matrix(�
 variance(ρ, op) = expectation_value(ρ, op^2) - expectation_value(ρ, op)^2
 
 ## ======== Measurement sets =================
+single_charge_probabilities(grid) = [p1(coordinate) for coordinate in grid]
+double_charge_probabilities(grid) = [p2(coordinate) for coordinate in grid]
+
+function charge_probabilities(grid)
+    vcat(single_charge_probabilities(grid),
+        double_charge_probabilities(grid))
+end
+
+single_charge_measurements(grid) = [nbr_op(coordinate) for coordinate in grid]
+function double_charge_measurements(grid)
+    [nbr2_op(coordinate) for coordinate in grid]
+end
+function charge_measurements(grid)
+    vcat(single_charge_measurements(grid), double_charge_measurements(grid))
+end
+
+matrix_representation_ops(ops, H) = map(Base.Fix2(matrix_representation, H), ops)
 
 function charge_measurements(qd_system::QuantumDotSystem)
-    coordinates = qd_system.grid.total
-    single_charge_sym_ops = [nbr_op(coordinate) for coordinate in coordinates]
-    double_charge_sym_ops = [nbr2_op(coordinate) for coordinate in coordinates]
-    symops = vcat(single_charge_sym_ops, double_charge_sym_ops)
-    [matrix_representation(op, qd_system.H_total) for op in symops]
-end
-
-function single_charge_probabilities(coordinates)
-    [p1(coordinate) for coordinate in coordinates]
-end
-function double_charge_probabilities(coordinates)
-    [p2(coordinate) for coordinate in coordinates]
-end
-function charge_probabilities(coordinates)
-    vcat(single_charge_probabilities(coordinates),
-        double_charge_probabilities(coordinates))
+    matrix_representation_ops(
+        charge_measurements(qd_system.grids.total), qd_system.H_total)
 end
 function charge_probabilities(qd_system::QuantumDotSystem)
-    coordinates = qd_system.grid.total
-    charge_prob_ops = charge_probabilities(coordinates)
-    [matrix_representation(op, qd_system.H_total) for op in charge_prob_ops]
+    matrix_representation_ops(
+        charge_probabilities(qd_system.grids.total), qd_system.H_total)
 end
-function correlated_measurements(coordinates, qn_total)
-    valid_combos = get_measurement_combinations(coordinates, qn_total)
-    measurement_ops = [measurement_combination_op(coordinates, measurement_combo)
+
+function correlated_measurements(grid, qn_total)
+    valid_combos = get_measurement_combinations(grid, qn_total)
+    measurement_ops = [measurement_combination_op(grid, measurement_combo)
                        for measurement_combo in valid_combos]
     return measurement_ops
 end
-function get_measurement_combinations(coordinates, qn_total)
-    nbr_coordinates = length(coordinates)
+function get_measurement_combinations(grid, qn_total)
+    nbr_coordinates = length(grid)
     all_combos = Iterators.product(ntuple(_ -> 0:2, nbr_coordinates)...)
     valid_combos = [measurement_combo
                     for measurement_combo in all_combos
                     if qn_total == sum(measurement_combo)]
     return valid_combos
 end
-function measurement_combination_op(coordinates, measurement_combo)
-    prod([p(measurement_combo[i], coord) for (i, coord) in enumerate(coordinates)])
+function measurement_combination_op(grid, measurement_combo)
+    prod([p(measurement_combo[i], coord) for (i, coord) in enumerate(grid)])
 end
 function correlated_measurements(qd_system)
-    correlated_measurements(qd_system.grid.total, qd_system.qn_total)
+    matrix_representation_ops(
+        correlated_measurements(qd_system.grids.total, qd_system.qn_total), qd_system.H_total)
 end
 
 ## ============= Spin measurements ======================

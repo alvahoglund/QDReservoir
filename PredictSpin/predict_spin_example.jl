@@ -5,7 +5,7 @@ import QDReservoir as QDR
 nbr_dots_res = 6
 qn_res = 3
 sys = tight_binding_system(2, nbr_dots_res, qn_res)
-hams = QDR.matrix_representation_hams(hamiltonians(sys), sys)
+hams = QDR.matrix_representation_hams(hamiltonians(sys.grids), sys)
 
 nbr_states = 10^6
 nbr_train = nbr_states ÷ 2
@@ -14,7 +14,7 @@ nbr_test = nbr_states - nbr_train
 
 # ===================== Charge Measurements, X =============================
 measurements = map(m -> matrix_representation(m, sys.H_total),
-    QDR.single_charge_probabilities(sys.grid.total))
+    QDR.single_charge_probabilities(sys.grids.total))
 Ω = stack(vec(QDR.hilbert_schmidt_ensemble(sys.H_main)) for i in 1:nbr_states)
 S = scrambling_map(sys, measurements, ground_state(hams.res),
     hams.total, [10, 100, 1000])

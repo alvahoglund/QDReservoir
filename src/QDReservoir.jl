@@ -16,17 +16,11 @@ export state_time_evolution, operator_time_evolution
 export set_dot_params, set_interaction_params
 
 include("quantum_dot_system.jl")
+include("hamiltonian_tight_binding.jl")
 include("states.jl")
 include("time_evolution.jl")
 include("measurements.jl")
 include("effective_measurements.jl")
-include("hamiltonian_tight_binding.jl")
 include("scrambling_map.jl")
-
-@static if false
-    include("../Examples/basic_usage.jl")
-    include("../EnergySpectrum/plot_energy_spectrum.jl")
-    include("../EnergySpectrum/energy_spin_spectrum.jl")
-end
 
 end

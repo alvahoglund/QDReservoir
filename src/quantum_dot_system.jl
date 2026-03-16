@@ -1,12 +1,12 @@
 const f = FermionicHilbertSpaces.SymbolicFermionBasis(:f, 0)
 struct QuantumDotSystem
-    grids::Any
+    grids::Grids
 
     Hs_main::Any
-    H_main::Any
+    H_main::AbstractHilbertSpace
 
-    H_res::Any
-    H_total::Any
+    H_res::AbstractHilbertSpace
+    H_total::AbstractHilbertSpace
 end
 
 struct Grids

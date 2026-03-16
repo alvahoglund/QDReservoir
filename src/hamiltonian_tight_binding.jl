@@ -1,13 +1,13 @@
 struct DotParams
-    ϵ::Any
-    ϵb::Any
-    u_intra::Any
+    ϵ::AbstractDict
+    ϵb::AbstractDict
+    u_intra::AbstractDict
 end
 
 struct InteractionParams
-    t::Any
-    t_so::Any
-    u_inter::Any
+    t::AbstractDict
+    t_so::AbstractDict
+    u_inter::AbstractDict
 end
 
 struct Hamiltonians
@@ -15,9 +15,9 @@ struct Hamiltonians
     res::Any
     intersection::Any
     total::Any
-    dot_params_main::Any
-    dot_params_res::Any
-    interaction_params::Any
+    dot_params_main::DotParams
+    dot_params_res::DotParams
+    interaction_params::InteractionParams
 end
 
 ## ============ Singel dot ================

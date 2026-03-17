@@ -19,28 +19,38 @@ end
     ## Initialize system
     qd_system = tight_binding_system(2, 3, 1)
     seed = 2
-    hams = hamiltonians(qd_system, seed)
+    hams = hamiltonians(qd_system.grids, seed)
 
-    ham_res = matrix_representation(hams.hamiltonian_reservoir, qd_system.H_reservoir)
+    ham_res = matrix_representation(hams.res, qd_system.H_res)
     ψ_res = ground_state(ham_res)
     ρres = ψ_res * ψ_res'
 
-    initial_states = map(density_matrix, [def_state(triplet_plus, qd_system.H_main, qd_system.f),
-        def_state(singlet, qd_system.H_main, qd_system.f),
-        random_product_state(qd_system),
-        random_separable_state(3, qd_system)])
+    initial_states = map(density_matrix,
+        [def_state(triplet_plus, qd_system.H_main),
+            def_state(singlet, qd_system.H_main),
+            random_product_state(qd_system),
+            random_separable_state(3, qd_system)])
 
-    total_states = map(initial_state -> tensor_product((initial_state, ρres), (qd_system.H_main, qd_system.H_reservoir) => qd_system.H_total), initial_states)
+    total_states = map(
+        initial_state -> tensor_product((initial_state, ρres),
+            (qd_system.H_main, qd_system.H_res) => qd_system.H_total),
+        initial_states)
     measurements = charge_measurements(qd_system)
 
     t = 10
-    ham_total = matrix_representation(hams.hamiltonian_total, qd_system.H_total)
+    ham_total = matrix_representation(hams.total, qd_system.H_total)
 
-    time_evolved_states = map(total_state -> state_time_evolution(total_state, t, ham_total), total_states)
-    time_evolved_measurements = map(measurement -> operator_time_evolution(measurement, t, ham_total), measurements)
-    effective_measurements = map(measurement -> effective_measurement(measurement, ρres, qd_system), time_evolved_measurements)
-    scrambling_block = scrambling_map(qd_system, measurements, ψ_res, ham_total, t, QDR.BlockPropagatorAlg())
-    scrambling_pure = scrambling_map(qd_system, measurements, ψ_res, ham_total, t, QDR.PureStatePropagatorAlg())
+    time_evolved_states = map(
+        total_state -> state_time_evolution(total_state, t, ham_total), total_states)
+    time_evolved_measurements = map(
+        measurement -> operator_time_evolution(measurement, t, ham_total), measurements)
+    effective_measurements = map(
+        measurement -> effective_measurement(measurement, ρres, qd_system),
+        time_evolved_measurements)
+    scrambling_block = scrambling_map(
+        qd_system, measurements, ψ_res, ham_total, t, QDR.BlockPropagatorAlg())
+    scrambling_pure = scrambling_map(
+        qd_system, measurements, ψ_res, ham_total, t, QDR.PureStatePropagatorAlg())
 
     @test scrambling_block ≈ scrambling_pure
 
@@ -48,9 +58,8 @@ end
         exp_val_1 = expectation_value(time_evolved_states[i], measurements[j])
         exp_val_2 = expectation_value(total_states[i], time_evolved_measurements[j])
         exp_val_3 = expectation_value(initial_states[i], effective_measurements[j])
-        exp_val_4 = (scrambling_block*vec(initial_states[i]))[j]
-        exp_val_5 = (scrambling_pure*vec(initial_states[i]))[j]
+        exp_val_4 = (scrambling_block * vec(initial_states[i]))[j]
+        exp_val_5 = (scrambling_pure * vec(initial_states[i]))[j]
         @test exp_val_1 ≈ exp_val_2 ≈ exp_val_3 ≈ exp_val_4 ≈ exp_val_5
     end
 end
-

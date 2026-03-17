@@ -1,23 +1,23 @@
-struct DotParams
-    ϵ::AbstractDict
-    ϵb::AbstractDict
-    u_intra::AbstractDict
+struct DotParams{D <: AbstractDict}
+    ϵ::D
+    ϵb::D
+    u_intra::D
 end
 
-struct InteractionParams
-    t::AbstractDict
-    t_so::AbstractDict
-    u_inter::AbstractDict
+struct InteractionParams{D <: AbstractDict}
+    t::D
+    t_so::D
+    u_inter::D
 end
 
-struct Hamiltonians
-    main::Any
-    res::Any
-    intersection::Any
-    total::Any
-    dot_params_main::DotParams
-    dot_params_res::DotParams
-    interaction_params::InteractionParams
+struct Hamiltonians{M, R, I, T, DM <: DotParams, DR <: DotParams, DI <: InteractionParams}
+    main::M
+    res::R
+    intersection::I
+    total::T
+    dot_params_main::DM
+    dot_params_res::DR
+    interaction_params::DI
 end
 
 ## ============ Singel dot ================

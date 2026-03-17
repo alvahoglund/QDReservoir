@@ -1,20 +1,20 @@
 const f = FermionicHilbertSpaces.SymbolicFermionBasis(:f, 0)
 const SPINS = (:↑, :↓)
-struct Grids
-    main::Any
-    res::Any
-    total::Any
-    intersection::Any
+struct Grids{M, R, T, I}
+    main::M
+    res::R
+    total::T
+    intersection::I
 end
 
-struct QuantumDotSystem
-    grids::Grids
+struct QuantumDotSystem{G, HsM, HM, HR, HT}
+    grids::G
 
-    Hs_main::Any
-    H_main::AbstractHilbertSpace
+    Hs_main::HsM
+    H_main::HM
 
-    H_res::AbstractHilbertSpace
-    H_total::AbstractHilbertSpace
+    H_res::HR
+    H_total::HT
 end
 
 function labels(coordinates)

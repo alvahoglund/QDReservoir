@@ -1,13 +1,13 @@
-struct DotParams{D <: AbstractDict}
-    ϵ::D
-    ϵb::D
-    u_intra::D
+struct DotParams{D1, D2, D3}
+    ϵ::D1
+    ϵb::D2
+    u_intra::D3
 end
 
-struct InteractionParams{D <: AbstractDict}
-    t::D
-    t_so::D
-    u_inter::D
+struct InteractionParams{D1, D2, D3}
+    t::D1
+    t_so::D2
+    u_inter::D3
 end
 
 struct Hamiltonians{M, R, I, T, DM <: DotParams, DR <: DotParams, DI <: InteractionParams}

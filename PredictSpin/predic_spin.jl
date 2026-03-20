@@ -41,16 +41,17 @@ function plot_varying_noise(Ω, S, Pm, Pm_dict, ps_list)
     sv_overlaps = SV_overlap(S_SVD, Pm)
     mse_pred_list = vcat([transpose(mse_prediction(S_SVD, Pm, σE, b)) for σE in σE_list]...)
 
-    fig = Figure()
+    fig = Figure(size = (700, 400))
     for (i, ps) in enumerate(ps_list)
         idx = Pm_dict[ps...]
         ax = Axis(fig[i, 1], xlabel = "Noise level (σE)", ylabel = "Mean Squared Error",
             title = "Measurement: $(ps[1]) ⊗ $(ps[2])",
             xscale = log10)
         lines!(ax, σE_list, mse_list[:, idx], label = "MSE")
+        #vlines!(ax, [10^-4, 10^-2], linestyle = :dash, color = :grey)
         lines!(ax, σE_list, mse_pred_list[:, idx], label = "Predicted MSE")
         vlines!(ax, sqrt(b) .* S_SVD.S, color = sv_overlaps[:, idx],
-            colormap = :Blues, colorrange = (-0.1, maximum(sv_overlaps[:, idx])),
+            colormap = :Blues, colorrange = (-0.5, maximum(sv_overlaps[:, idx])),
             linestyle = :dash, label = "√b*σS")
         axislegend(position = :lt)
     end
@@ -58,15 +59,15 @@ function plot_varying_noise(Ω, S, Pm, Pm_dict, ps_list)
 end
 
 # ====== Choose system parameters ======
-nbr_dots_res = 3
-qn_res = 1
+nbr_dots_res = 6
+qn_res = 3
 sys = tight_binding_system(2, nbr_dots_res, qn_res)
-hams = QDR.matrix_representation_hams(QDR.hamiltonians(sys.grids), sys)
+seed = 1234
+hams = QDR.matrix_representation_hams(QDR.hamiltonians(sys.grids, seed), sys)
 ρ_res = ground_state(hams.res)
-t_list = [10, 20]
+t_list = [100]
 
-nbr_states = 10^4
-σE = 0
+nbr_states = 10000
 measurements = QDR.charge_measurements(sys)
 
 Pm, Pm_dict = QDR.pauli_matrix(sys.Hs_main, sys.H_main)
@@ -74,6 +75,5 @@ Pm, Pm_dict = QDR.pauli_matrix(sys.Hs_main, sys.H_main)
 S = scrambling_map(sys, measurements, ρ_res, hams.total, t_list)
 
 # ===== PLOT VARYING NOISE =========== 
-ps_list = [(:σx, :σx)
-           (:σ0, :σy)]
+ps_list = [(:σz, :σz)]
 plot_varying_noise(Ω, S, Pm, Pm_dict, ps_list)

@@ -22,27 +22,6 @@ function get_ham(grids)
         u_intra_func, t_func, t_so_func, u_inter_func)
 end
 
-function default_main_system_dot_params(grid)
-    ϵ_func() = 0.5
-    ϵb_func() = [0, 0, 1]
-    u_intra_func() = rand() + 10
-    return set_dot_params(ϵ_func, ϵb_func, u_intra_func, grid)
-end
-
-function default_res_dot_params(grid)
-    ϵ_func() = rand()
-    ϵb_func() = [0, 0, 1]
-    u_intra_func() = rand() + 10
-    return set_dot_params(ϵ_func, ϵb_func, u_intra_func, grid)
-end
-
-function default_interaction_params(grid)
-    t_func() = rand()
-    t_so_func() = 0.1 * rand()
-    u_inter_func() = rand()
-    return set_interaction_params(t_func, t_so_func, u_inter_func, grid)
-end
-
 function avg_smallest_sv(grid, qn_res, randomized_hams, t, measurements)
     sys = tight_binding_system(grid, qn_res)
     sv_sum = 0.0

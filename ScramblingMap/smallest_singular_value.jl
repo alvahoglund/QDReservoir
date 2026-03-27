@@ -2,7 +2,7 @@ using QDReservoir, LinearAlgebra, CairoMakie, Random
 import QDReservoir as QDR
 
 ## ===================== Functions ========================
-clean_val(y) = map(x -> abs(x) < 1e-10 ? NaN
+clean_val(y) = map(x -> abs(x) < 1e-14 ? NaN
                         : x, y)
 
 function get_ham(grids, ϵ_func_main, ϵ_func_res, ϵb_func,
@@ -30,7 +30,7 @@ function avg_smallest_sv(grid, qn_res, randomized_hams, t, measurements)
         hams = QDR.matrix_representation_hams(randomized_hams[i], sys)
         S = scrambling_map(sys, QDR.matrix_representation_ops(measurements, sys.H_total),
             ground_state(hams.res), hams.total, t)
-        sv = minimum(svd(S).S)
+        sv = minimum(svdvals(S))
         sv_sum += sv
         sv_sq_sum += sv^2
     end
@@ -39,6 +39,7 @@ function avg_smallest_sv(grid, qn_res, randomized_hams, t, measurements)
     return mean, std
 end
 
+## ===================== Functions for Singular values vs. reservoir electrons ========================
 function avg_smallest_sv(nbr_dots_res_list, t, nbr_samples, parameters)
     nbr_dots_main = 2
     avg_smallest_sv_dict = Dict{Tuple{Int, Int}, Tuple{Float64, Float64}}()
@@ -86,91 +87,51 @@ function plot_avg_sv_vs_qn(avg_smallest_sv_dict, title)
     CairoMakie.display(fig)
 end
 
-## ===================== Parameters and system generation ========================
-##All parameters
-seed = 29084
-Random.seed!(seed)
+## ===================== Functions for Singular values vs parameter size ========================
+function avg_sv_vs_param(nbr_dots_res, qn_res, parameter_list, nbr_samples, t)
+    grid = QDR.generate_grid(2, nbr_dots_res)
+    measurements = QDR.charge_probabilities(grid.total)
 
-parameters1 = (
-    ϵ_func_main = () -> 0.5,
-    ϵ_func_res = () -> rand(),
-    ϵb_func = () -> [0, 0, 1],
-    u_intra_func = () -> 10 + rand(),
-    t_func = () -> rand(),
-    t_so_func = () -> 0.1 * rand(),
-    u_inter_func = () -> rand()
-)
+    randomized_hams_list = [[get_ham(grid, parameters) for _ in 1:nbr_samples]
+                            for parameters in parameter_list]
+    avg_sv_list = [avg_smallest_sv(grid, qn_res, randomized_hams, t, measurements)
+                   for randomized_hams in randomized_hams_list]
+    return avg_sv_list
+end
 
-nbr_dots_res_list = [2, 3, 4, 5, 6]
-t = [100, 200]
-nbr_samples = 1
+function avg_sv_vs_param(reservoir_settings, parameters_list, nbr_samples, t)
+    avg_sv_dict = Dict{Tuple{Int, Int}, Vector{Tuple{Float64, Float64}}}()
+    for (nbr_dots_res, qn_res) in reservoir_settings
+        println("Calculating for reservoir dots: $(nbr_dots_res), reservoir electrons: $(qn_res)")
+        avg_sv_list = avg_sv_vs_param(nbr_dots_res, qn_res, parameters_list, nbr_samples, t)
+        avg_sv_dict[(nbr_dots_res, qn_res)] = avg_sv_list
+    end
+    return avg_sv_dict
+end
 
-avg_smallest_sv_dict_1 = avg_smallest_sv(nbr_dots_res_list, t, nbr_samples, parameters1)
+function plot_avg_sv_vs_param(avg_sv_dict, x_range, title, xlabel)
+    fig = Figure(size = (700, 500))
+    ax = Axis(fig[1, 1],
+        ylabel = "Average smallest singular value",
+        xlabel = xlabel,
+        title = title,
+        titlesize = 18,
+        yscale = log10,
+        xscale = log10
+    )
+    for (nbr_dots_res, qn_res) in keys(avg_sv_dict)
+        avg_sv_list = avg_sv_dict[(nbr_dots_res, qn_res)]
 
-title = L"H = H_ϵ + H_B + H_{U}^{\text{intra}} +H_{U}^{\text{inter}} + H_t + H_{SO}"
-plot_avg_sv_vs_qn(avg_smallest_sv_dict_1, title)
-##Removed Uinter
-seed = 42879
-Random.seed!(seed)
+        means = clean_val.(getindex.(avg_sv_list, 1))
+        stds = clean_val.(getindex.(avg_sv_list, 2))
 
-parameters2 = (
-    ϵ_func_main = () -> 0.5,
-    ϵ_func_res = () -> rand(),
-    ϵb_func = () -> [0, 0, 1],
-    u_intra_func = () -> 10 + rand(),
-    t_func = () -> rand(),
-    t_so_func = () -> 0.1 * rand(),
-    u_inter_func = () -> 0
-)
-
-nbr_dots_res_list = [2, 3, 4, 5, 6]
-t = [100, 200]
-nbr_samples = 10
-
-avg_smallest_sv_dict_2 = avg_smallest_sv(nbr_dots_res_list, t, nbr_samples, parameters2)
-title = L"H = H_ϵ + H_B + H_{U}^{\text{intra}} + H_t + H_{SO}"
-plot_avg_sv_vs_qn(avg_smallest_sv_dict_2, title)
-
-##Removed ϵb
-seed = 298478
-Random.seed!(seed)
-
-parameters3 = (
-    ϵ_func_main = () -> 0.5,
-    ϵ_func_res = () -> rand(),
-    ϵb_func = () -> [0, 0, 0],
-    u_intra_func = () -> 10 + rand(),
-    t_func = () -> rand(),
-    t_so_func = () -> 0.1 * rand(),
-    u_inter_func = () -> rand()
-)
-
-nbr_dots_res_list = [2, 3, 4, 5, 6]
-t = [100, 200]
-nbr_samples = 10
-
-avg_smallest_sv_dict_3 = avg_smallest_sv(nbr_dots_res_list, t, nbr_samples, parameters3)
-title = L"H = H_ϵ + H_{U}^{\text{intra}} + H_{U}^{\text{inter}} + H_t + H_{SO}"
-plot_avg_sv_vs_qn(avg_smallest_sv_dict_3, title)
-
-##Removed SO
-seed = 12830
-Random.seed!(seed)
-
-parameters4 = (
-    ϵ_func_main = () -> 0.5,
-    ϵ_func_res = () -> rand(),
-    ϵb_func = () -> [0, 0, 1],
-    u_intra_func = () -> 10 + rand(),
-    t_func = () -> rand(),
-    t_so_func = () -> 0,
-    u_inter_func = () -> rand()
-)
-
-nbr_dots_res_list = [2, 3, 4, 5, 6]
-t = [100, 200]
-nbr_samples = 10
-
-avg_smallest_sv_dict_4 = avg_smallest_sv(nbr_dots_res_list, t, nbr_samples, parameters4)
-title = L"H = H_ϵ + H_B + H_{U}^{\text{intra}} + H_{U}^{\text{inter}} + H_t"
-plot_avg_sv_vs_qn(avg_smallest_sv_dict_4, title)
+        lower = means
+        upper = means .+ stds
+        CairoMakie.band!(ax, x_range, lower, upper, alpha = 0.3)
+        CairoMakie.lines!(ax, x_range, means)
+        CairoMakie.scatter!(ax, x_range, means,
+            label = "res dots: $(nbr_dots_res), res electrons: $(qn_res)")
+    end
+    CairoMakie.axislegend(ax, position = :rb)
+    CairoMakie.display(fig)
+end

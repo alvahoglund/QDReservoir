@@ -56,9 +56,6 @@ function plot_nonlinear_db_in_spin_space(
     Pm_sub = get_sub_spin_basis(sys)
     grid = range(-1, 1, length = n_grid)
 
-    # Evaluate the full nonlinear pipeline (S → process_complex → tanh → W) on a 3D grid
-    # in (XX, YY, ZZ) spin space. Each grid point is reconstructed as:
-    #   ρ = (1/4)(σ0⊗σ0 + xx·σx⊗σx + yy·σy⊗σy + zz·σz⊗σz)
     function eval_point(xx, yy, zz)
         X_vec = QDR.process_complex.(S * (Pm_sub * [1.0, xx, yy, zz] ./ 4))
         X_poly = feature_transformation(reshape(X_vec, 1, :))
@@ -136,15 +133,20 @@ function default_system()
     ϵ_func() = 0.5
     ϵb_func() = [0, 0, 1]
     u_intra_func() = rand() + 10
+    u_inter_func() = rand()
     t_func() = rand()
     t_so_func() = 0.1 * rand()
 
     nbr_dots_res = 6
     qn_res = 3
-    return tight_binding_system(2, nbr_dots_res, qn_res)
+    sys = tight_binding_system(2, nbr_dots_res, qn_res)
+    hams = QDR.matrix_representation_hams(
+        get_ham(sys.grids, ϵ_func, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func),
+        sys)
+    return sys, hams
 end
 
-function default_scrambling(sys)
+function default_scrambling(sys, hams)
     t = 100
     measurements = map(m -> matrix_representation(m, sys.H_total),
         QDR.charge_probabilities(sys.grids.total))
@@ -215,11 +217,33 @@ function make_rff_transformation(n_input_features; n_rff = 500, σ = 1.0)
     X -> sqrt(2 / n_rff) .* cos.(X * ω .+ b')
 end
 
+function test_werner_state(state, W, S, feature_transformation_func = identity)
+    p_range_sep = range(2 / 3, 1, length = 100)
+    p_range_ent = range(0, 2 / 3, length = 100)
+    Ω_sep = stack(vec(QDR.werner_state(state, p, sys.H_main)) for p in p_range_sep)
+    Ω_ent = stack(vec(QDR.werner_state(state, p, sys.H_main)) for p in p_range_ent)
+    X_sep = QDR.process_complex.((S * Ω_sep)')
+    X_ent = QDR.process_complex.((S * Ω_ent)')
+    X_sep_poly = feature_transformation_func(X_sep)
+    X_ent_poly = feature_transformation_func(X_ent)
+    Y_sep_pred = X_sep_poly * W
+    Y_ent_pred = X_ent_poly * W
+    fig = Figure()
+    ax = Axis(fig[1, 1], xlabel = "p", ylabel = "Classifier output",
+        title = "Ridge regression prediction for Werner state with $(state) state")
+    scatter!(ax, p_range_sep, Y_sep_pred, label = "Separable states (p > 2/3)")
+    scatter!(ax, p_range_ent, Y_ent_pred, label = "Entangled states (p < 2/3)")
+    vlines!(ax, [2 / 3], linestyle = :dash, color = :grey, label = "Separability threshold")
+    hlines!(
+        ax, [0], linestyle = :dash, color = :red, label = "Classifier decision boundary")
+    axislegend(position = :lt)
+    display(fig)
+end
 ## ============ LINEAR ENTANGLEMENT WITNESS FOR SINGLET STATE =====================
-sys = default_system()
-S = default_scrambling(sys)
+sys, hams = default_system()
+S = default_scrambling(sys, hams)
 
-σE = 10^-4
+σE = 0
 λ = 0
 
 # Generate data
@@ -249,12 +273,12 @@ plot_3D_spin_space(Ω_sub_sep, Ω_sub_ent, W_sub_spin)
 Ω_sub_ent_noisy, Ω_sub_sep_noisy, W_sub_spin = project_on_3D_spin_space(
     Ω_ent_noisy, Ω_sep_noisy, W)
 plot_3D_spin_space(Ω_sub_sep_noisy, Ω_sub_ent_noisy, W_sub_spin)
-
+test_werner_state(QDR.singlet, W, S)
 ## ============= NONLINEAR ENTANGLEMENT WITNESS FOR WERNER STATES    =====================
-sys = default_system()
-S = default_scrambling(sys)
+sys, hams = default_system()
+S = default_scrambling(sys, hams)
 
-σE = 10^-3
+σE = 0
 λ = 0
 
 # Generate data
@@ -284,3 +308,4 @@ plot_test_vs_pred(Y_test, Y_pred)
 Ω_sub_ent, Ω_sub_sep = project_on_3D_spin_space(Ω_ent, Ω_sep)
 plot_nonlinear_db_in_spin_space(
     Ω_sub_sep, Ω_sub_ent, W, feature_transformation_func)
+test_werner_state(QDR.triplet_0, W, S, feature_transformation_func)

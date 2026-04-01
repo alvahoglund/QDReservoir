@@ -103,7 +103,7 @@ function plot_3D_spin_space(Ω_sep_spin, Ω_ent_spin, W_spin)
 
     display(fig)
 end
-function plot_test_vs_pred(Y_test, Y_pred)
+function plot_test_vs_pred_ew(Y_test, Y_pred)
     #Sort first on Y_test, then on Y_pred
     sort_indices = sortperm(Y_pred)
     Y_test = Y_test[sort_indices]
@@ -119,6 +119,23 @@ function plot_test_vs_pred(Y_test, Y_pred)
     display(fig)
 end
 get_fraction_correct(Y_true, Y_pred) = mean((Y_true .> 0) .== (Y_pred .> 0))
+
+function plot_test_vs_pred_purity(Y_test, Y_pred)
+    #Sort first on Y_test, then on Y_pred
+    sort_indices = sortperm(Y_pred)
+    Y_test = Y_test[sort_indices]
+    Y_pred = Y_pred[sort_indices]
+    fig = Figure()
+    ax = Axis(fig[1, 1], xlabel = "True labels", ylabel = "Predicted labels",
+        title = "Ridge regression for purity estimation, MSE = $(round(mse(Y_test, Y_pred), digits = 5))")
+    scatter!(ax, Y_test, Y_pred, label = "Predicted vs True")
+    lines!(ax, [0, 1], [0, 1], linestyle = :dash,
+        color = :red, label = "Perfect predictions")
+    axislegend(position = :lt)
+    display(fig)
+end
+
+mse(Y_true, Y_pred) = mean((Y_true - Y_pred) .^ 2)
 
 function get_ham(grids, ϵ_func, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func)
     main_system_parameters = QDR.set_dot_params(ϵ_func, ϵb_func, u_intra_func, grids.main)
@@ -171,6 +188,19 @@ function get_ent_states(nbr_ent_states, sys, state_names)
         hcat, state_names)
 end
 
+function random_mixed_states(nbr_states, sys)
+    p_list = rand(nbr_states)
+    mapreduce(
+        i -> vec((1 - p_list[i]) * density_matrix(QDR.random_state(sys.H_main)) +
+                 p_list[i] * QDR.max_mixed_state(sys.H_main)),
+        hcat, 1:nbr_states)
+end
+
+function get_varying_purity_states(total_nbr_states, nbr_pure_states, sys)
+    nbr_mixed_states = total_nbr_states ÷ nbr_pure_states
+    mapreduce(_ -> get_mixed_states(nbr_mixed_states, sys), hcat, 1:nbr_pure_states)
+end
+
 function get_charge_measurements(S, Ω, σE)
     X = QDR.process_complex.((S * Ω)')
     E = rand(Normal(0, σE), size(X))
@@ -202,7 +232,7 @@ end
 
 # Degree-2 polynomial: [x, x², xᵢxⱼ]
 # Equivalent to the degree-2 polynomial kernel k(x,y) = (xᵀy)²
-function explicit_degree_2_polynomial_feature_transformation(X)
+function degree_2_polynomial_feature_transformation(X)
     n_samples, n_features = size(X)
     hcat(X, X .^ 2,
         [X[:, i] .* X[:, j] for i in 1:n_features for j in (i + 1):n_features]...)
@@ -211,7 +241,7 @@ end
 # Random Fourier Features: approximates the RBF (Gaussian) kernel k(x,y) = exp(-||x-y||²/2σ²)
 # ω is drawn once and reused — make sure to use the same ω for train and test.
 # Returns a closure so the same random projection is applied consistently.
-function make_rff_transformation(n_input_features; n_rff = 500, σ = 1.0)
+function rff_transformation(n_input_features; n_rff = 500, σ = 1.0)
     ω = randn(n_input_features, n_rff) ./ σ
     b = rand(Uniform(0, 2π), n_rff)
     X -> sqrt(2 / n_rff) .* cos.(X * ω .+ b')
@@ -263,7 +293,7 @@ W, Y_pred = ridge_regression(X̃_train, Y_train, X̃_test, λ)
 
 ## Plots
 heatmap_W_spin_basis(W, sys)
-plot_test_vs_pred(Y_test, Y_pred)
+plot_test_vs_pred_ew(Y_test, Y_pred)
 
 Ω_sub_ent, Ω_sub_sep, W_sub_spin = project_on_3D_spin_space(Ω_ent, Ω_sep, W)
 plot_3D_spin_space(Ω_sub_sep, Ω_sub_ent, W_sub_spin)
@@ -295,17 +325,45 @@ X_sep, X̃_sep = get_charge_measurements(S, Ω_sep, σE)
 X_train, X_test, X̃_train, X̃_test, Y_train, Y_test = split_data(
     X_ent, X̃_ent, X_sep, X̃_sep)
 
-#feature_transformation_func = make_rff_transformation(size(X̃_train, 2))
-feature_transformation_func = explicit_degree_2_polynomial_feature_transformation
+#feature_transformation_func = rff_transformation(size(X̃_train, 2))
+feature_transformation_func = degree_2_polynomial_feature_transformation
 X̃_train_poly = feature_transformation_func(X̃_train)
 X̃_test_poly = feature_transformation_func(X̃_test)
 
 W, Y_pred = ridge_regression(X̃_train_poly, Y_train, X̃_test_poly, λ)
 
-plot_test_vs_pred(Y_test, Y_pred)
+plot_test_vs_pred_ew(Y_test, Y_pred)
 ##
 
 Ω_sub_ent, Ω_sub_sep = project_on_3D_spin_space(Ω_ent, Ω_sep)
 plot_nonlinear_db_in_spin_space(
     Ω_sub_sep, Ω_sub_ent, W, feature_transformation_func)
 test_werner_state(QDR.triplet_0, W, S, feature_transformation_func)
+
+## ============ ESTIMATE PURITY ======================
+
+seed = 1238
+Random.seed!(seed)
+sys, hams = default_system()
+S = default_scrambling(sys, hams)
+
+σE = 10^-4
+λ = 0
+
+nbr_states = 10^5
+#Ω = mapreduce(
+#    i -> vec(density_matrix(QDR.hilbert_schmidt_ensemble(sys.H_main))), hcat, 1:nbr_states)
+Ω = random_mixed_states(nbr_states, sys)
+X = QDR.process_complex.((S * Ω)')
+E = rand(Normal(0, σE), size(X))
+X̃ = X + E
+X_train, X_test = X̃[1:(nbr_states ÷ 2), :], X̃[(nbr_states ÷ 2 + 1):end, :]
+feature_transformation_func = degree_2_polynomial_feature_transformation
+X_train_poly = feature_transformation_func(X_train)
+X_test_poly = feature_transformation_func(X_test)
+
+Y = [real(dot(Ω[:, i], Ω[:, i])) for i in 1:nbr_states]
+Y_train, Y_test = Y[1:(nbr_states ÷ 2)], Y[(nbr_states ÷ 2 + 1):end]
+W, Y_pred = ridge_regression(X_train_poly, Y_train, X_test_poly, λ)
+plot_test_vs_pred_purity(Y_test, Y_pred)
+mse(Y_test, Y_pred)

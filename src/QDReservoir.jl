@@ -22,5 +22,6 @@ include("time_evolution.jl")
 include("measurements.jl")
 include("effective_measurements.jl")
 include("scrambling_map.jl")
+include("regression.jl")
 
 end

@@ -3,188 +3,12 @@ using QDReservoir
 using LinearAlgebra, Statistics, GLMakie, Distributions, Random
 import QDReservoir as QDR
 
-## ======================= Plotting Functions =============================
-function heatmap_W_spin_basis(W, S, sys)
-    Pm, Pm_dict = QDR.pauli_matrix(sys.Hs_main, sys.H_main)
-    W_spin_basis = (QDR.process_complex.(S * Pm))' * W .* (1 / 4)
-
-    fig, ax, hm = heatmap(
-        1:4, 1:4, reshape(W_spin_basis, (4, 4)), colormap = :bam, colorrange = [-1, 1])
-
-    ax.xticks = (1:4, ["σ0", "σx", "σy", "σz"])
-    ax.yticks = (1:4, ["σ0", "σx", " σy", "σz"])
-    Colorbar(fig[:, end + 1], hm, label = "Coefficient")
-    display(fig)
-end
-
-function format_σE(σE)
-    σE == 0 && return "0"
-    exp = floor(Int, log10(σE))
-    mantissa = σE / 10.0^exp
-    mantissa ≈ 1 ? "10^$exp" : "$(round(mantissa, digits=2))×10^$exp"
-end
-
-function bars_W_spin_basis(W_list, S, sys, σE_list)
-    Pm, Pm_dict = QDR.pauli_matrix(sys.Hs_main, sys.H_main)
-    fig = Figure()
-    ax = Axis(fig[1, 1], xticklabelrotation = π / 4)
-    pauli_string_labels = ["$a ⊗ $b"
-                           for a in ["I", "X", "Y", "Z"] for b in ["I", "X", "Y", "Z"]]
-    ax.xticks = (1:16, pauli_string_labels)
-
-    n = length(W_list)
-    colors = Makie.wong_colors()
-    for (i, (W, σE)) in enumerate(zip(W_list, σE_list))
-        W_spin_basis = (QDR.process_complex.(S * Pm))' * W .* (1 / 4)
-        barplot!(ax, 1:16, W_spin_basis; dodge = fill(i, 16), n_dodge = n,
-            color = colors[i], label = "σE = $(format_σE(σE))")
-    end
-    axislegend(ax, position = :lb)
-    display(fig)
-end
-
-function get_linear_db(W_spin)
-    x_range = range(-1, 1, length = 100)
-    y_range = range(-1, 1, length = 100)
-    b = W_spin[1]
-    wx = W_spin[2]
-    wy = W_spin[3]
-    wz = W_spin[4]
-    db_plane = [-(b + wx * x + wy * y) / wz for x in x_range, y in y_range]
-    return x_range, y_range, db_plane
-end
-
-function get_sub_spin_basis(sys)
-    Pm, Pm_dict = QDR.pauli_matrix(sys.Hs_main, sys.H_main)
-    Pm[:,
-        [Pm_dict[(:σ0, :σ0)], Pm_dict[(:σx, :σx)],
-            Pm_dict[(:σy, :σy)], Pm_dict[(:σz, :σz)]]]
-end
-
-function project_on_3D_spin_space(Ω_ent, Ω_sep, W)
-    Pm_sub = get_sub_spin_basis(sys)
-    Ω_sub_ent = QDR.process_complex.(Ω_ent' * Pm_sub)
-    Ω_sub_sep = QDR.process_complex.(Ω_sep' * Pm_sub)
-    W_sub_spin = (QDR.process_complex.(S * Pm_sub))' * W .* (1 / 4)
-    return Ω_sub_ent, Ω_sub_sep, W_sub_spin
-end
-
-function project_on_3D_spin_space(Ω_ent, Ω_sep)
-    Pm_sub = get_sub_spin_basis(sys)
-    Ω_sub_ent = QDR.process_complex.(Ω_ent' * Pm_sub)
-    Ω_sub_sep = QDR.process_complex.(Ω_sep' * Pm_sub)
-    return Ω_sub_ent, Ω_sub_sep
-end
-
-function plot_nonlinear_db_in_spin_space(
-        Ω_sub_sep, Ω_sub_ent, W, feature_transformation; n_grid = 25)
-    Pm_sub = get_sub_spin_basis(sys)
-    grid = range(-1, 1, length = n_grid)
-
-    function eval_point(xx, yy, zz)
-        X_vec = QDR.process_complex.(S * (Pm_sub * [1.0, xx, yy, zz] ./ 4))
-        X_poly = feature_transformation(reshape(X_vec, 1, :))
-        Float32(dot(vec(X_poly), W))
-    end
-    vals = Float32[eval_point(xx, yy, zz) for xx in grid, yy in grid, zz in grid]
-
-    fig = Figure()
-    ax = Axis3(fig[1, 1], xlabel = "XX", ylabel = "YY", zlabel = "ZZ",
-        title = "Nonlinear decision boundary in spin space")
-
-    scatter!(ax, Ω_sub_sep[1:10:end, 2], Ω_sub_sep[1:10:end, 3], Ω_sub_sep[1:10:end, 4],
-        label = "Separable", markersize = 5)
-    scatter!(
-        ax, Ω_sub_ent[1:1000:end, 2], Ω_sub_ent[1:1000:end, 3], Ω_sub_ent[1:1000:end, 4],
-        label = "Entangled", markersize = 5)
-
-    # Isosurface at classifier output = 0 (the decision boundary)
-    volume!(ax, (-1, 1), (-1, 1), (-1, 1), vals;
-        algorithm = :iso, isovalue = 0.0f0, isorange = 0.1f0, alpha = 0.5)
-    display(fig)
-end
-
-function plot_3D_spin_space(Ω_sep_spin, Ω_ent_spin, W_spin)
-    fig = Figure()
-    ax = Axis3(fig[1, 1], xlabel = "XX", ylabel = "YY", zlabel = "ZZ",
-        title = "Ridge regression classification in XX, YY, ZZ space")
-    plot_states_sep = 10
-    plot_states_ent = 5000
-    scatter!(ax,
-        Ω_sep_spin[1:plot_states_sep:end, 2],
-        Ω_sep_spin[1:plot_states_sep:end, 3],
-        Ω_sep_spin[1:plot_states_sep:end, 4],
-        label = "Separable states", markersize = 5
-    )
-
-    scatter!(ax,
-        Ω_ent_spin[1:plot_states_ent:end, 2],
-        Ω_ent_spin[1:plot_states_ent:end, 3],
-        Ω_ent_spin[1:plot_states_ent:end, 4],
-        label = "Entangled states", markersize = 5
-    )
-    x_range, y_range, db_plane = get_linear_db(W_spin)
-    surface!(ax, x_range, y_range, db_plane, label = "Decision boundary")
-
-    display(fig)
-end
-function plot_test_vs_pred_ew(Y_test, Y_pred)
-    #Sort first on Y_test, then on Y_pred
-    sort_indices = sortperm(Y_pred)
-    Y_test = Y_test[sort_indices]
-    Y_pred = Y_pred[sort_indices]
-    x_range = range(-1, 1, length = length(Y_pred))
-    fig = Figure()
-    ax = Axis(fig[1, 1], xlabel = "Sorted index", ylabel = "Label value",
-        title = "Ridge regression for entanglement witness, fraction correct = $(round(get_fraction_correct(Y_test, Y_pred), digits = 4))")
-    scatter!(ax, x_range, tanh.(Y_pred * 3), label = "Predicted labels (tanh scaled)")
-    scatter!(ax, x_range, Y_test, label = "True labels")
-    scatter!(ax, x_range, Y_pred, label = "Predicted labels")
-    axislegend(position = :lt)
-    display(fig)
-end
-get_fraction_correct(Y_true, Y_pred) = mean((Y_true .> 0) .== (Y_pred .> 0))
-
-function plot_test_vs_pred_purity(Y_test, Y_pred)
-    #Sort first on Y_test, then on Y_pred
-    sort_indices = sortperm(Y_pred)
-    Y_test = Y_test[sort_indices]
-    Y_pred = Y_pred[sort_indices]
-    fig = Figure()
-    ax = Axis(fig[1, 1], xlabel = "True labels", ylabel = "Predicted labels",
-        title = "Ridge regression for purity estimation, MSE = $(round(mse(Y_test, Y_pred), digits = 5))")
-    scatter!(ax, Y_test, Y_pred, label = "Predicted vs True")
-    lines!(ax, [0, 1], [0, 1], linestyle = :dash,
-        color = :red, label = "Perfect predictions")
-    axislegend(position = :lt)
-    display(fig)
-end
-
-mse(Y_true, Y_pred) = mean((Y_true - Y_pred) .^ 2)
-
-function get_ham(grids, ϵ_func, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func)
-    main_system_parameters = QDR.set_dot_params(ϵ_func, ϵb_func, u_intra_func, grids.main)
-    reservoir_parameters = QDR.set_dot_params(ϵ_func, ϵb_func, u_intra_func, grids.res)
-    interaction_parameters = QDR.set_interaction_params(
-        t_func, t_so_func, u_inter_func, grids.total)
-    hamiltonians(grids, main_system_parameters,
-        reservoir_parameters, interaction_parameters)
-end
-
+## ======================= Implement EWs =============================
 function default_system()
-    ϵ_func() = 0.5
-    ϵb_func() = [0, 0, 1]
-    u_intra_func() = rand() + 10
-    u_inter_func() = rand()
-    t_func() = rand()
-    t_so_func() = 0.1 * rand()
-
     nbr_dots_res = 6
     qn_res = 3
     sys = tight_binding_system(2, nbr_dots_res, qn_res)
-    hams = QDR.matrix_representation_hams(
-        get_ham(sys.grids, ϵ_func, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func),
-        sys)
+    hams = QDR.matrix_representation_hams(hamiltonians(sys.grids), sys)
     return sys, hams
 end
 
@@ -213,28 +37,15 @@ function get_ent_states(nbr_ent_states, sys, state_names)
         hcat, state_names)
 end
 
-function random_mixed_states(nbr_states, sys)
-    p_list = rand(nbr_states)
-    mapreduce(
-        i -> vec((1 - p_list[i]) * density_matrix(QDR.random_state(sys.H_main)) +
-                 p_list[i] * QDR.max_mixed_state(sys.H_main)),
-        hcat, 1:nbr_states)
-end
-
-function get_varying_purity_states(total_nbr_states, nbr_pure_states, sys)
-    nbr_mixed_states = total_nbr_states ÷ nbr_pure_states
-    mapreduce(_ -> get_mixed_states(nbr_mixed_states, sys), hcat, 1:nbr_pure_states)
+function get_charge_measurements(S, Ω, σE)
+    X = QDR.process_complex.((S * Ω)')
+    X̃ = add_noise(σE, X)
+    return X, X̃
 end
 
 function add_noise(σE, X)
     E = rand(Normal(0, σE), size(X))
     return X + E
-end
-
-function get_charge_measurements(S, Ω, σE)
-    X = QDR.process_complex.((S * Ω)')
-    X̃ = add_noise(σE, X)
-    return X, X̃
 end
 
 function split_data(X_ent, X̃_ent, X_sep, X̃_sep)
@@ -253,27 +64,173 @@ function split_data(X_ent, X̃_ent, X_sep, X̃_sep)
     return X_train, X_test, X̃_train, X̃_test, Y_train, Y_test
 end
 
-function ridge_regression(X_train, Y_train, X_test, λ)
-    W = (X_train' * X_train + λ * I) \ (X_train' * Y_train)
-    Y_pred = X_test * W
-    return W, Y_pred
+function construct_EW(X_ent, X_sep, σE, feature_transformation_func = identity)
+    X̃_ent = add_noise(σE, X_ent)
+    X̃_sep = add_noise(σE, X_sep)
+    X_train, X_test, X̃_train, X̃_test, Y_train, Y_test = split_data(
+        X_ent, X̃_ent, X_sep, X̃_sep)
+    X̃_train_poly = feature_transformation_func(X̃_train)
+    X̃_test_poly = feature_transformation_func(X̃_test)
+    W, Y_pred = QDR.ridge_regression(X̃_train_poly, Y_train, X̃_test_poly)
+    return W, Y_pred, Y_test
 end
 
-# Degree-2 polynomial: [x, x², xᵢxⱼ]
-# Equivalent to the degree-2 polynomial kernel k(x,y) = (xᵀy)²
-function degree_2_polynomial_feature_transformation(X)
-    n_samples, n_features = size(X)
-    hcat(X, X .^ 2,
-        [X[:, i] .* X[:, j] for i in 1:n_features for j in (i + 1):n_features]...)
+function get_ew_mse(X_ent, X_sep, σE, feature_transformation_func = identity)
+    W, Y_pred, Y_true = construct_EW(X_ent, X_sep, σE, feature_transformation_func)
+    return mse(Y_true, Y_pred)
 end
 
-# Random Fourier Features: approximates the RBF (Gaussian) kernel k(x,y) = exp(-||x-y||²/2σ²)
-# ω is drawn once and reused — make sure to use the same ω for train and test.
-# Returns a closure so the same random projection is applied consistently.
-function rff_transformation(n_input_features; n_rff = 500, σ = 1.0)
-    ω = randn(n_input_features, n_rff) ./ σ
-    b = rand(Uniform(0, 2π), n_rff)
-    X -> sqrt(2 / n_rff) .* cos.(X * ω .+ b')
+function get_ew_fraction_correct(X_ent, X_sep, σE, feature_transformation_func = identity)
+    W, Y_pred, Y_true = construct_EW(X_ent, X_sep, σE, feature_transformation_func)
+    return get_fraction_correct(Y_true, Y_pred)
+end
+
+# ======================= Plotting Weight Matrix =============================
+function plot_heatmap_W_spin_basis(W, S, sys)
+    Pm, Pm_dict = QDR.pauli_matrix(sys.Hs_main, sys.H_main)
+    W_spin_basis = (QDR.process_complex.(S * Pm))' * W .* (1 / 4)
+
+    fig, ax, hm = heatmap(
+        1:4, 1:4, reshape(W_spin_basis, (4, 4)), colormap = :bam, colorrange = [-1, 1])
+
+    ax.xticks = (1:4, ["σ0", "σx", "σy", "σz"])
+    ax.yticks = (1:4, ["σ0", "σx", " σy", "σz"])
+    Colorbar(fig[:, end + 1], hm, label = "Coefficient")
+    display(fig)
+end
+
+function format_σE(σE)
+    σE == 0 && return "0"
+    exp = floor(Int, log10(σE))
+    mantissa = σE / 10.0^exp
+    mantissa ≈ 1 ? "10^$exp" : "$(round(mantissa, digits=2))×10^$exp"
+end
+
+function plot_bars_W_spin_basis(W_list, S, sys, σE_list)
+    Pm, Pm_dict = QDR.pauli_matrix(sys.Hs_main, sys.H_main)
+    fig = Figure()
+    ax = Axis(fig[1, 1], xticklabelrotation = π / 4)
+    pauli_string_labels = ["$a ⊗ $b"
+                           for a in ["I", "X", "Y", "Z"] for b in ["I", "X", "Y", "Z"]]
+    ax.xticks = (1:16, pauli_string_labels)
+
+    n = length(W_list)
+    colors = Makie.wong_colors()
+    for (i, (W, σE)) in enumerate(zip(W_list, σE_list))
+        W_spin_basis = (QDR.process_complex.(S * Pm))' * W .* (1 / 4)
+        barplot!(ax, 1:16, W_spin_basis; dodge = fill(i, 16), n_dodge = n,
+            color = colors[i], label = "σE = $(format_σE(σE))")
+    end
+    axislegend(ax, position = :lb)
+    display(fig)
+end
+
+# ==================== Plot in XX, YY, ZZ space ============================
+
+function get_linear_db(W_spin)
+    x_range = range(-1, 1, length = 100)
+    y_range = range(-1, 1, length = 100)
+    b = W_spin[1]
+    wx = W_spin[2]
+    wy = W_spin[3]
+    wz = W_spin[4]
+    db_plane = [-(b + wx * x + wy * y) / wz for x in x_range, y in y_range]
+    return x_range, y_range, db_plane
+end
+
+function get_sub_spin_basis(sys)
+    Pm, Pm_dict = QDR.pauli_matrix(sys.Hs_main, sys.H_main)
+    Pm[:,
+        [Pm_dict[(:σ0, :σ0)], Pm_dict[(:σx, :σx)],
+            Pm_dict[(:σy, :σy)], Pm_dict[(:σz, :σz)]]]
+end
+
+function project_on_sub_spin_basis(Ω_ent, Ω_sep, W)
+    Pm_sub = get_sub_spin_basis(sys)
+    Ω_sub_ent = QDR.process_complex.(Ω_ent' * Pm_sub)
+    Ω_sub_sep = QDR.process_complex.(Ω_sep' * Pm_sub)
+    W_sub_spin = (QDR.process_complex.(S * Pm_sub))' * W .* (1 / 4)
+    return Ω_sub_ent, Ω_sub_sep, W_sub_spin
+end
+
+function project_on_sub_spin_basis(Ω_ent, Ω_sep)
+    Pm_sub = get_sub_spin_basis(sys)
+    Ω_sub_ent = QDR.process_complex.(Ω_ent' * Pm_sub)
+    Ω_sub_sep = QDR.process_complex.(Ω_sep' * Pm_sub)
+    return Ω_sub_ent, Ω_sub_sep
+end
+
+function plot_nonlinear_db_spin_space(
+        Ω_sub_sep, Ω_sub_ent, W, feature_transformation; n_grid = 25)
+    Pm_sub = get_sub_spin_basis(sys)
+    grid = range(-1, 1, length = n_grid)
+
+    function eval_point(xx, yy, zz)
+        X_vec = QDR.process_complex.(S * (Pm_sub * [1.0, xx, yy, zz] ./ 4))
+        X_poly = feature_transformation(reshape(X_vec, 1, :))
+        Float32(dot(vec(X_poly), W))
+    end
+    vals = Float32[eval_point(xx, yy, zz) for xx in grid, yy in grid, zz in grid]
+
+    fig = Figure()
+    ax = Axis3(fig[1, 1], xlabel = "XX", ylabel = "YY", zlabel = "ZZ",
+        title = "Nonlinear decision boundary in spin space")
+
+    scatter!(ax, Ω_sub_sep[1:10:end, 2], Ω_sub_sep[1:10:end, 3], Ω_sub_sep[1:10:end, 4],
+        label = "Separable", markersize = 5)
+    scatter!(
+        ax, Ω_sub_ent[1:1000:end, 2], Ω_sub_ent[1:1000:end, 3], Ω_sub_ent[1:1000:end, 4],
+        label = "Entangled", markersize = 5)
+
+    # Isosurface at classifier output = 0 (the decision boundary)
+    volume!(ax, (-1, 1), (-1, 1), (-1, 1), vals;
+        algorithm = :iso, isovalue = 0.0f0, isorange = 0.1f0, alpha = 0.5)
+    display(fig)
+end
+
+function plot_linear_db_spin_space(Ω_sep_spin, Ω_ent_spin, W_spin)
+    fig = Figure()
+    ax = Axis3(fig[1, 1], xlabel = "XX", ylabel = "YY", zlabel = "ZZ",
+        title = "Ridge regression classification in XX, YY, ZZ space")
+    plot_states_sep = 10
+    plot_states_ent = 5000
+    scatter!(ax,
+        Ω_sep_spin[1:plot_states_sep:end, 2],
+        Ω_sep_spin[1:plot_states_sep:end, 3],
+        Ω_sep_spin[1:plot_states_sep:end, 4],
+        label = "Separable states", markersize = 5
+    )
+
+    scatter!(ax,
+        Ω_ent_spin[1:plot_states_ent:end, 2],
+        Ω_ent_spin[1:plot_states_ent:end, 3],
+        Ω_ent_spin[1:plot_states_ent:end, 4],
+        label = "Entangled states", markersize = 5
+    )
+    x_range, y_range, db_plane = get_linear_db(W_spin)
+    surface!(ax, x_range, y_range, db_plane, label = "Decision boundary")
+
+    display(fig)
+end
+
+# =================== Plot accuracy ============================
+get_fraction_correct(Y_true, Y_pred) = mean((Y_true .> 0) .== (Y_pred .> 0))
+mse(Y_true, Y_pred) = mean((Y_true - Y_pred) .^ 2)
+
+function plot_test_vs_pred_ew(Y_test, Y_pred)
+    #Sort first on Y_test, then on Y_pred
+    sort_indices = sortperm(Y_pred)
+    Y_test = Y_test[sort_indices]
+    Y_pred = Y_pred[sort_indices]
+    x_range = range(-1, 1, length = length(Y_pred))
+    fig = Figure()
+    ax = Axis(fig[1, 1], xlabel = "Sorted index", ylabel = "Label value",
+        title = "Ridge regression for entanglement witness, fraction correct = $(round(get_fraction_correct(Y_test, Y_pred), digits = 4))")
+    scatter!(ax, x_range, tanh.(Y_pred * 3), label = "Predicted labels (tanh scaled)")
+    scatter!(ax, x_range, Y_test, label = "True labels")
+    scatter!(ax, x_range, Y_pred, label = "Predicted labels")
+    axislegend(position = :lt)
+    display(fig)
 end
 
 function test_werner_state(
@@ -300,55 +257,6 @@ function test_werner_state(
     end
     #axislegend(position = :lt)
     display(fig)
-end
-
-function predict_purity(X, σE)
-    X̃ = add_noise(σE, X)
-    nbr_states = size(X, 1)
-    X̃_train, X̃_test = X̃[1:(nbr_states ÷ 2), :], X̃[(nbr_states ÷ 2 + 1):end, :]
-    feature_transformation_func = degree_2_polynomial_feature_transformation
-    X̃_train_poly = feature_transformation_func(X̃_train)
-    X̃_test_poly = feature_transformation_func(X̃_test)
-
-    Y = [real(dot(Ω[:, i], Ω[:, i])) for i in 1:nbr_states]
-    Y_train, Y_test = Y[1:(nbr_states ÷ 2)], Y[(nbr_states ÷ 2 + 1):end]
-    W, Y_pred = ridge_regression(X̃_train_poly, Y_train, X̃_test_poly, λ)
-    return Y_pred, Y_test
-end
-
-function get_purity_mse(X, σE)
-    Y_pred, Y_true = predict_purity(X, σE)
-    return mse(Y_true, Y_pred)
-end
-
-function plot_purity_mse(σE_list, mse_list, vlines_list = nothing)
-    fig = Figure()
-    ax = Axis(fig[1, 1], xlabel = "Noise level (σE)", ylabel = "Mean Squared Error",
-        title = "MSE of Ridge regression for purity estimation", xscale = log10)
-    lines!(ax, σE_list, mse_list, label = "MSE")
-    if vlines_list !== nothing
-        vlines!(ax, vlines_list, linestyle = :dash, color = :red, label = "Examples")
-    end
-    axislegend(position = :lt)
-    display(fig)
-end
-
-function predict_entanglement(X_ent, X_sep, σE)
-    X̃_ent = add_noise(σE, X_ent)
-    X̃_sep = add_noise(σE, X_sep)
-    X_train, X_test, X̃_train, X̃_test, Y_train, Y_test = split_data(
-        X_ent, X̃_ent, X_sep, X̃_sep)
-    W, Y_pred = ridge_regression(X̃_train, Y_train, X̃_test, 0)
-    return W, Y_pred, Y_test
-end
-
-function get_ew_mse(X_ent, X_sep, σE)
-    W, Y_pred, Y_true = predict_entanglement(X_ent, X_sep, σE)
-    return mse(Y_true, Y_pred)
-end
-function get_ew_fraction_correct(X_ent, X_sep, σE)
-    W, Y_pred, Y_true = predict_entanglement(X_ent, X_sep, σE)
-    return get_fraction_correct(Y_true, Y_pred)
 end
 
 function plot_ew_mse(σE_list, mse_list)
@@ -394,21 +302,21 @@ X_ent, X̃_ent = get_charge_measurements(S, Ω_ent, σE)
 X_sep, X̃_sep = get_charge_measurements(S, Ω_sep, σE)
 X_train, X_test, X̃_train, X̃_test, Y_train, Y_test = split_data(
     X_ent, X̃_ent, X_sep, X̃_sep)
-W, Y_pred = ridge_regression(X̃_train, Y_train, X̃_test, λ)
+W, Y_pred = QDR.ridge_regression(X_train, Y_train, X_test, λ)
 
 ## Plots
-bars_W_spin_basis([W], S, sys, [σE])
-heatmap_W_spin_basis(W, S, sys)
+plot_bars_W_spin_basis([W], S, sys, [σE])
+plot_heatmap_W_spin_basis(W, S, sys)
 plot_test_vs_pred_ew(Y_test, Y_pred)
 
-Ω_sub_ent, Ω_sub_sep, W_sub_spin = project_on_3D_spin_space(Ω_ent, Ω_sep, W)
-plot_3D_spin_space(Ω_sub_sep, Ω_sub_ent, W_sub_spin)
+Ω_sub_ent, Ω_sub_sep, W_sub_spin = project_on_sub_spin_basis(Ω_ent, Ω_sep, W)
+plot_linear_db_spin_space(Ω_sub_sep, Ω_sub_ent, W_sub_spin)
 
 Ω_ent_noisy = (X̃_ent * pinv(S'))'
 Ω_sep_noisy = (X̃_sep * pinv(S'))'
-Ω_sub_ent_noisy, Ω_sub_sep_noisy, W_sub_spin = project_on_3D_spin_space(
+Ω_sub_ent_noisy, Ω_sub_sep_noisy, W_sub_spin = project_on_sub_spin_basis(
     Ω_ent_noisy, Ω_sep_noisy, W)
-plot_3D_spin_space(Ω_sub_sep_noisy, Ω_sub_ent_noisy, W_sub_spin)
+plot_linear_db_spin_space(Ω_sub_sep_noisy, Ω_sub_ent_noisy, W_sub_spin)
 test_werner_state(state_names, W, S)
 
 ##Plot MSE for varying noise
@@ -426,8 +334,8 @@ plot_ew_fraction_correct(σE_list, fraction_correct_list, [10^-10, 10^-4, 10^-2]
 ## Plot EW for varying noise 
 
 σE_list = [0, 10^-4, 10^-2]
-W_list = [predict_entanglement(X_ent, X_sep, σE)[1] for σE in σE_list]
-bars_W_spin_basis(W_list, S, sys, σE_list)
+W_list = [construct_EW(X_ent, X_sep, σE)[1] for σE in σE_list]
+plot_bars_W_spin_basis(W_list, S, sys, σE_list)
 ## ============= NONLINEAR ENTANGLEMENT WITNESS FOR WERNER STATES    =====================
 sys, hams = default_system()
 S = default_scrambling(sys, hams)
@@ -450,64 +358,17 @@ X_train, X_test, X̃_train, X̃_test, Y_train, Y_test = split_data(
     X_ent, X̃_ent, X_sep, X̃_sep)
 
 #feature_transformation_func = rff_transformation(size(X̃_train, 2))
-feature_transformation_func = degree_2_polynomial_feature_transformation
+feature_transformation_func = QDR.degree_2_polynomial_feature_transformation
 X̃_train_poly = feature_transformation_func(X̃_train)
 X̃_test_poly = feature_transformation_func(X̃_test)
 
-W, Y_pred = ridge_regression(X̃_train_poly, Y_train, X̃_test_poly, λ)
+W, Y_pred = QDR.ridge_regression(X̃_train_poly, Y_train, X̃_test_poly, λ)
 
 ## PLOTS
 plot_test_vs_pred_ew(Y_test, Y_pred)
-Ω_sub_ent, Ω_sub_sep = project_on_3D_spin_space(Ω_ent, Ω_sep)
-plot_nonlinear_db_in_spin_space(
+Ω_sub_ent, Ω_sub_sep = project_on_sub_spin_basis(Ω_ent, Ω_sep)
+plot_nonlinear_db_spin_space(
     Ω_sub_sep, Ω_sub_ent, W, feature_transformation_func)
 test_werner_state(
     state_names, W, S,
     feature_transformation_func)
-
-## ============ ESTIMATE PURITY ======================
-seed = 1238
-Random.seed!(seed)
-sys, hams = default_system()
-S = default_scrambling(sys, hams)
-
-σE = 10^-4
-λ = 0
-
-nbr_states = 10^5
-Ω = random_mixed_states(nbr_states, sys)
-X = QDR.process_complex.((S * Ω)')
-E = rand(Normal(0, σE), size(X))
-X̃ = X + E
-X̃_train, X̃_test = X̃[1:(nbr_states ÷ 2), :], X̃[(nbr_states ÷ 2 + 1):end, :]
-feature_transformation_func = degree_2_polynomial_feature_transformation
-X̃_train_poly = feature_transformation_func(X̃_train)
-X̃_test_poly = feature_transformation_func(X̃_test)
-
-Y = [real(dot(Ω[:, i], Ω[:, i])) for i in 1:nbr_states]
-Y_train, Y_test = Y[1:(nbr_states ÷ 2)], Y[(nbr_states ÷ 2 + 1):end]
-W, Y_pred = ridge_regression(X̃_train_poly, Y_train, X̃_test_poly, λ)
-plot_test_vs_pred_purity(Y_test, Y_pred)
-mse(Y_test, Y_pred)
-
-## Plot purity estimation MSE for varying noise
-σE_list = 10 .^ range(-10, 0, length = 50)
-
-mse_list = vcat([get_purity_mse(X, σE) for σE in σE_list]...)
-plot_purity_mse(σE_list, mse_list, [10^-10, 10^-4])
-
-##
-X_U, X_S, X_V = svd(X)
-mse_pred(X_S, X_U, Y, σ_E) = Y' * X_U * diagm(σ_E^2 ./ ((X_S .^ 2) .+ σ_E^2)) * X_U' * Y
-
-mse_pred_list = vcat([mse_pred(X_S, X_U, Y, σE) for σE in σE_list]...)
-plot_purity_mse(σE_list, mse_pred_list)
-
-fig = Figure()
-ax = Axis(fig[1, 1], xlabel = "Noise level (σE)",
-    ylabel = "Mean Squared Error", title = "MSE of Ridge regression for purity estimation",
-    xscale = log10)
-lines!(ax, σE_list, mse_list, label = "MSE")
-lines!(ax, σE_list, mse_pred_list ./ 20, label = "Predicted MSE")
-axislegend(position = :lt)
-display(fig)

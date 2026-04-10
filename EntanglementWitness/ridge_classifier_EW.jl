@@ -31,48 +31,59 @@ function get_sep_states(nbr_sep_states, sys)
     for i in 1:nbr_sep_states)
 end
 
+function get_sep_states(nbr_sep_states, rank, sys)
+    stack(vec(density_matrix(QDR.random_separable_state(
+              rank, sys.Hs_main, sys.H_main)))
+    for i in 1:nbr_sep_states)
+end
+
 function get_ent_states(nbr_ent_states, sys, state_names)
     p_list = range(0, 1 / 3, length = nbr_ent_states ÷ length(state_names))
     mapreduce(state -> stack(vec(QDR.werner_state(state, p, sys.H_main)) for p in p_list),
         hcat, state_names)
 end
 
-function get_charge_measurements(S, Ω, σE)
-    X = QDR.process_complex.((S * Ω)')
-    X̃ = add_noise(σE, X)
-    return X, X̃
-end
+get_charge_measurements(S, Ω) = QDR.process_complex.((S * Ω)')
 
 function add_noise(σE, X)
     E = rand(Normal(0, σE), size(X))
     return X + E
 end
 
-function split_data(X_ent, X̃_ent, X_sep, X̃_sep)
-    X = vcat(X_sep, X_ent)
+function split_data(X̃_ent, X̃_sep)
     X̃ = vcat(X̃_sep, X̃_ent)
+    Y = vcat(ones(size(X̃_sep, 1)), (-1) .* ones(size(X̃_ent, 1)))
 
-    # Shuffle data in X
-    perm = randperm(size(X, 1))
-    X = X[perm, :]
+    perm = randperm(size(X̃, 1))
     X̃ = X̃[perm, :]
-    nbr_train = size(X, 1) ÷ 2
-    X_train, X_test = X[1:nbr_train, :], X[(nbr_train + 1):end, :]
+    Y = Y[perm]
+
+    nbr_train = size(X̃, 1) ÷ 2
     X̃_train, X̃_test = X̃[1:nbr_train, :], X̃[(nbr_train + 1):end, :]
-    Y = vcat(ones(size(X_ent)[1]), (-1) .* ones(size(X_ent)[1]))[perm]
     Y_train, Y_test = Y[1:nbr_train], Y[(nbr_train + 1):end]
-    return X_train, X_test, X̃_train, X̃_test, Y_train, Y_test
+    return X̃_train, X̃_test, Y_train, Y_test
 end
 
-function construct_EW(X_ent, X_sep, σE, feature_transformation_func = identity)
+function construct_EW(X_ent, X_sep, σE::Number, feature_transformation_func = identity)
     X̃_ent = add_noise(σE, X_ent)
     X̃_sep = add_noise(σE, X_sep)
-    X_train, X_test, X̃_train, X̃_test, Y_train, Y_test = split_data(
-        X_ent, X̃_ent, X_sep, X̃_sep)
+    construct_EW(X̃_ent, X̃_sep, feature_transformation_func)
+end
+
+function construct_EW(X̃_ent, X̃_sep, feature_transformation_func = identity)
+    X̃_train, X̃_test, Y_train, Y_test = split_data(
+        X̃_ent, X̃_sep)
     X̃_train_poly = feature_transformation_func(X̃_train)
     X̃_test_poly = feature_transformation_func(X̃_test)
     W, Y_pred = QDR.ridge_regression(X̃_train_poly, Y_train, X̃_test_poly)
     return W, Y_pred, Y_test
+end
+
+function test_EW(X, σE, W, Y, feature_transformation_func = identity)
+    X_noisy = add_noise(σE, X)
+    X_poly = feature_transformation_func(X_noisy)
+    Y_pred = X_poly * W
+    return get_fraction_correct(Y_pred, Y)
 end
 
 function get_ew_mse(X_ent, X_sep, σE, feature_transformation_func = identity)
@@ -282,93 +293,39 @@ function plot_ew_fraction_correct(σE_list, fraction_correct_list, vlines_list =
     display(fig)
 end
 
-## ============ LINEAR ENTANGLEMENT WITNESS FOR SINGLET STATE =====================
-sys, hams = default_system()
-S = default_scrambling(sys, hams)
+function test_werner_state_against_noise(
+        state_list, W_list, S, σE_list, feature_transformation_func = identity)
+    nbr_test_states = 1000
+    Y = (-1) .* ones(nbr_test_states)
+    X_states = [get_charge_measurements(S, get_ent_states(nbr_test_states, sys, [state]))
+                for state in state_list]
+    EW_performance = [[test_EW(X_state, σ_E, W, Y,
+                           feature_transformation_func)
+                       for (σ_E, W) in zip(σE_list, W_list)] for X_state in X_states]
+    return EW_performance
+end
 
-σE = 0
-λ = 0
+function test_separable_state_against_noise(
+        W_list, S, σE_list, feature_transformation_func = identity)
+    nbr_test_states = 1000
+    Y = ones(nbr_test_states)
+    Ω_list = [get_sep_states(nbr_test_states, rank, sys) for rank in 1:4]
+    X_sep_list = [get_charge_measurements(S, Ω) for Ω in Ω_list]
 
-# Generate data
-nbr_sep_states = 10^5
-nbr_ent_states = 10^5
-nbr_train = (nbr_sep_states + nbr_ent_states) ÷ 2
-Ω_sep = get_prod_states(nbr_sep_states, sys)
-state_names = [QDR.singlet]
-Ω_ent = get_ent_states(nbr_ent_states, sys, state_names)
-Ω = vcat(Ω_sep, Ω_ent)
+    EW_performance = [[test_EW(X_sep, σ_E, W, Y,
+                           feature_transformation_func)
+                       for (σ_E, W) in zip(σE_list, W_list)] for X_sep in X_sep_list]
+    return EW_performance
+end
 
-X_ent, X̃_ent = get_charge_measurements(S, Ω_ent, σE)
-X_sep, X̃_sep = get_charge_measurements(S, Ω_sep, σE)
-X_train, X_test, X̃_train, X̃_test, Y_train, Y_test = split_data(
-    X_ent, X̃_ent, X_sep, X̃_sep)
-W, Y_pred = QDR.ridge_regression(X_train, Y_train, X_test, λ)
-
-## Plots
-plot_bars_W_spin_basis([W], S, sys, [σE])
-plot_heatmap_W_spin_basis(W, S, sys)
-plot_test_vs_pred_ew(Y_test, Y_pred)
-
-Ω_sub_ent, Ω_sub_sep, W_sub_spin = project_on_sub_spin_basis(Ω_ent, Ω_sep, W)
-plot_linear_db_spin_space(Ω_sub_sep, Ω_sub_ent, W_sub_spin)
-
-Ω_ent_noisy = (X̃_ent * pinv(S'))'
-Ω_sep_noisy = (X̃_sep * pinv(S'))'
-Ω_sub_ent_noisy, Ω_sub_sep_noisy, W_sub_spin = project_on_sub_spin_basis(
-    Ω_ent_noisy, Ω_sep_noisy, W)
-plot_linear_db_spin_space(Ω_sub_sep_noisy, Ω_sub_ent_noisy, W_sub_spin)
-test_werner_state(state_names, W, S)
-
-##Plot MSE for varying noise
-
-σE_list = 10 .^ range(-10, 0, length = 50)
-#mse_list = vcat([get_ew_mse(X_ent, X_sep, σE) for σE in σE_list]...)
-#plot_ew_mse(σE_list, mse_list)
-
-#X_U, X_S, X_V = svd(X_test)
-#mse_pred(X_S, X_U, Y, σ_E) = Y' * X_U * diagm(σ_E^2 ./ ((X_S .^ 2) .+ σ_E^2)) * X_U' * Y
-#mse_pred_list = vcat([mse_pred(X_S, X_U, Y_test, σE) for σE in σE_list]...)
-fraction_correct_list = vcat([get_ew_fraction_correct(X_ent, X_sep, σE) for σE in σE_list]...)
-plot_ew_fraction_correct(σE_list, fraction_correct_list, [10^-10, 10^-4, 10^-2])
-
-## Plot EW for varying noise 
-
-σE_list = [0, 10^-4, 10^-2]
-W_list = [construct_EW(X_ent, X_sep, σE)[1] for σE in σE_list]
-plot_bars_W_spin_basis(W_list, S, sys, σE_list)
-## ============= NONLINEAR ENTANGLEMENT WITNESS FOR WERNER STATES    =====================
-sys, hams = default_system()
-S = default_scrambling(sys, hams)
-
-σE = 0
-λ = 0
-
-# Generate data
-nbr_sep_states = 10^5
-nbr_ent_states = 10^5
-nbr_train = (nbr_sep_states + nbr_ent_states) ÷ 2
-Ω_sep = get_sep_states(nbr_sep_states, sys)
-state_names = [QDR.singlet, QDR.triplet_0, QDR.triplet_plus, QDR.triplet_minus]
-Ω_ent = get_ent_states(nbr_ent_states, sys, state_names)
-Ω = vcat(Ω_sep, Ω_ent)
-
-X_ent, X̃_ent = get_charge_measurements(S, Ω_ent, σE)
-X_sep, X̃_sep = get_charge_measurements(S, Ω_sep, σE)
-X_train, X_test, X̃_train, X̃_test, Y_train, Y_test = split_data(
-    X_ent, X̃_ent, X_sep, X̃_sep)
-
-#feature_transformation_func = rff_transformation(size(X̃_train, 2))
-feature_transformation_func = QDR.degree_2_polynomial_feature_transformation
-X̃_train_poly = feature_transformation_func(X̃_train)
-X̃_test_poly = feature_transformation_func(X̃_test)
-
-W, Y_pred = QDR.ridge_regression(X̃_train_poly, Y_train, X̃_test_poly, λ)
-
-## PLOTS
-plot_test_vs_pred_ew(Y_test, Y_pred)
-Ω_sub_ent, Ω_sub_sep = project_on_sub_spin_basis(Ω_ent, Ω_sep)
-plot_nonlinear_db_spin_space(
-    Ω_sub_sep, Ω_sub_ent, W, feature_transformation_func)
-test_werner_state(
-    state_names, W, S,
-    feature_transformation_func)
+function plot_state_performance_against_noise(state_labels, EW_performance, σE_list)
+    fig = Figure()
+    ax = Axis(fig[1, 1], xlabel = "Noise level (σE)", ylabel = "Fraction incorrect",
+        title = "Classification accuracy of Entanglement Witness",
+        xscale = log10)
+    for (i, state_label) in enumerate(state_labels)
+        lines!(ax, σE_list, 1 .- EW_performance[i], label = "State: $state_label")
+    end
+    axislegend(position = :lt)
+    display(fig)
+end

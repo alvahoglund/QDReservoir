@@ -1,7 +1,12 @@
-function ridge_regression(X_train, Y_train, X_test, λ = 0)
+function ridge_regression(X_train, Y_train, λ::Number = 0)
     U, s, V = svd(X_train)
     d = s ./ (s .^ 2 .+ λ)
     W = V * Diagonal(d) * (U' * Y_train)
+    return W
+end
+
+function ridge_regression(X_train, Y_train, X_test, λ::Number = 0)
+    W = ridge_regression(X_train, Y_train, λ)
     Y_pred = X_test * W
     return W, Y_pred
 end

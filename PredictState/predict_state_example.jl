@@ -57,15 +57,16 @@ X = QDR.process_complex.((S * Ω)')
 E = rand(Normal(0, σE), size(X))
 X̃ = X + E
 
-X_train, X_test = X̃[1:nbr_train, :], X̃[(nbr_train + 1):nbr_states, :]
+X̃_train, X̃_test = X̃[1:nbr_train, :], X̃[(nbr_train + 1):nbr_states, :]
 
 Y = Ω'
 Y_train, Y_test = Y[1:nbr_train, :], Y[(nbr_train + 1):nbr_states, :]
 
-W = pinv(X_train) * Y_train
+W = pinv(X̃_train) * Y_train
 W_expected = pinv(S')
 println("norm(W - W_expected): ", norm(W - W_expected))
 
-Y_pred = X_test * W
+Y_pred = X̃_test * W
 
 trace_distances_list = trace_distances(Y_pred, Y_test)
+mean_trace_distance = mean(trace_distances_list)

@@ -1530,7 +1530,7 @@ uuid = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
 version = "1.96.4"
 
 [[deps.QDReservoir]]
-deps = ["ArnoldiMethod", "Arpack", "CairoMakie", "Distributions", "ExponentialUtilities", "FermionicHilbertSpaces", "GLMakie", "IJulia", "LaTeXStrings", "LinearAlgebra", "LinearMaps", "MathTeXEngine", "Plots", "PyCall", "Random", "RandomMatrices", "Reexport", "SparseArrays", "Statistics", "StatsBase", "Test", "TestItems"]
+deps = ["ArnoldiMethod", "Arpack", "CairoMakie", "Distributions", "ExponentialUtilities", "FermionicHilbertSpaces", "GLMakie", "IJulia", "LinearAlgebra", "LinearMaps", "Plots", "PyCall", "Random", "RandomMatrices", "Reexport", "SparseArrays", "Statistics", "StatsBase", "Test", "TestItems"]
 path = "."
 uuid = "a8eb8c1c-a57f-457e-a3ea-da0f1636d681"
 version = "0.1.0"

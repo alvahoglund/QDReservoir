@@ -34,16 +34,10 @@ function def_state(state_name, H)
     return normalize!(v)
 end
 
-function max_mixed_state(H)
-    v0 = vac_state(H)
-    states = [matrix_representation(f[(1, 1), σ1]'f[(1, 2), σ2]', H) * v0
-              for σ1 in SPINS, σ2 in SPINS]
-    ρ_mixed = 1 / 2 * sum(state * state' for state in states)
-    return ρ_mixed
-end
+max_mixed_state(H) = Matrix{ComplexF64}(I, dim(H), dim(H)) / dim(H)
 
 function werner_state(state_name, p, H)
-    (1 - p) * def_state(state_name, H) + p * max_mixed_state(H)
+    (1 - p) * density_matrix(def_state(state_name, H)) + p * max_mixed_state(H)
 end
 
 random_state(H) = normalize!(randn(ComplexF64, dim(H)))

@@ -4,11 +4,11 @@ import QDReservoir as QDR
 using Plots
 
 function get_ham(
-        grids, ϵ_func, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func)
+        grids, ϵ_func_main, ϵ_func_res, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func)
     main_system_params = QDR.set_dot_params(
-        ϵ_func, ϵb_func, u_intra_func, grids.main)
+        ϵ_func_main, ϵb_func, u_intra_func, grids.main)
     res_params = QDR.set_dot_params(
-        ϵ_func, ϵb_func, u_intra_func, grids.res)
+        ϵ_func_res, ϵb_func, u_intra_func, grids.res)
     interaction_params = QDR.set_interaction_params(
         t_func, t_so_func, u_inter_func, grids.total)
     hamiltonians(
@@ -58,18 +58,20 @@ end
 
 # ================ Parameters =====================
 
-ϵ_func() = 0
-ϵb_func() = [0, 0, 0]
-u_intra_func() = 10
-t_func() = 1
-t_so_func() = 0
-u_inter_func() = 0
+ϵ_func_main() = 0.5
+ϵ_func_res() = rand()
+ϵb_func() = [0, 0, 1]
+u_intra_func() = rand() + 10
+t_func() = rand()
+t_so_func() = 0.1 * rand()
+u_inter_func() = rand()
 
 nbr_dots_res = 3
 qn_res = 3
 sys = tight_binding_system(2, nbr_dots_res, qn_res)
 hams = QDR.matrix_representation_hams(
-    get_ham(sys.grids, ϵ_func, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func),
+    get_ham(sys.grids, ϵ_func_main, ϵ_func_res, ϵb_func,
+        u_intra_func, t_func, t_so_func, u_inter_func),
     sys)
 
 pl = plot()

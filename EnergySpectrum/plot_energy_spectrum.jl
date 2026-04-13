@@ -4,11 +4,11 @@ import QDReservoir as QDR
 using Plots
 
 function get_ham(
-        grids, ϵ_func, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func)
+        grids, ϵ_func_main, ϵ_func_res, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func)
     main_system_params = QDR.set_dot_params(
-        ϵ_func, ϵb_func, u_intra_func, grids.main)
+        ϵ_func_main, ϵb_func, u_intra_func, grids.main)
     res_params = QDR.set_dot_params(
-        ϵ_func, ϵb_func, u_intra_func, grids.res)
+        ϵ_func_res, ϵb_func, u_intra_func, grids.res)
     interaction_params = QDR.set_interaction_params(
         t_func, t_so_func, u_inter_func, grids.total)
     hamiltonians(
@@ -44,17 +44,17 @@ function plot_data!(p_es, subplot_idx, vals, E_exp, c_i2, qn_res)
     background = repeat(reshape(c_i2[xvals], 1, :), 100, 1)
 
     # Background heatmap in the subplot
-    heatmap!(p_es, xvals, LinRange(ymin, ymax, 100), background,
+    Plots.heatmap!(p_es, xvals, LinRange(ymin, ymax, 100), background,
         color = cgrad([:white, :purple]),
         legend = false,
         ylims = (ymin, ymax),
         subplot = subplot_idx)
 
-    scatter!(p_es, xvals, vals[xvals], color = :white, ms = 5,
+    Plots.scatter!(p_es, xvals, vals[xvals], color = :white, ms = 5,
         title = "Electrons in reservoir: $(qn_res)",
         subplot = subplot_idx)
 
-    hline!(p_es, [E_exp],
+    Plots.hline!(p_es, [E_exp],
         subplot = subplot_idx,
         color = :grey,
         linestyle = :dash,
@@ -62,7 +62,7 @@ function plot_data!(p_es, subplot_idx, vals, E_exp, c_i2, qn_res)
 end
 
 function plot_spectrum(hams_s, nbr_dots_res)
-    p_es = plot(layout = (nbr_dots_res + 1, 2), size = (1100, 1100))
+    p_es = Plots.plot(layout = (nbr_dots_res + 1, 2), size = (1100, 1100))
 
     for qn_res in 0:(2 * nbr_dots_res)
         sys = tight_binding_system(2, nbr_dots_res, qn_res)
@@ -77,24 +77,26 @@ function plot_spectrum(hams_s, nbr_dots_res)
 
         plot_data!(p_es, subplot_idx, vals, E_exp, c_i2, qn_res)
     end
-    plot!(p_es,
+    Plots.plot!(p_es,
         suptitle = " Energy spectrum of Hamiltonian block \n Dots in reservoir: $(nbr_dots_res)",
         ylabel = "Eigenenergy")
-    display(p_es)
+    Plots.display(p_es)
 end
 
 # ============== PARAMETERS =====================
 
-nbr_dots_res = 1
-ϵ_func() = 0
-ϵb_func() = [0, 0, 0]
-u_intra_func() = 10
+nbr_dots_res = 5
 
-t_func() = 1
-t_so_func() = 0
-u_inter_func() = 0
+ϵ_func_main() = 0.5
+ϵ_func_res() = rand()
+ϵb_func() = [0, 0, 1]
+u_intra_func() = rand() + 10
+t_func() = rand()
+t_so_func() = 0.1 * rand()
+u_inter_func() = rand()
+
 grids = QDR.generate_grid(2, nbr_dots_res)
 ham_tot = get_ham(
-    grids, ϵ_func, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func)
+    grids, ϵ_func_main, ϵ_func_res, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func)
 
 plot_spectrum(ham_tot, nbr_dots_res)

@@ -1,4 +1,32 @@
 includet("smallest_singular_value.jl")
+using CairoMakie
+
+function plot_avg_sv_vs_param(avg_sv_dict, x_range, title, xlabel)
+    fig = Figure(size = (700, 500))
+    ax = Axis(fig[1, 1],
+        ylabel = "Average smallest singular value",
+        xlabel = xlabel,
+        title = title,
+        titlesize = 18,
+        yscale = log10,
+        xscale = log10
+    )
+    for (nbr_dots_res, qn_res) in keys(avg_sv_dict)
+        avg_sv_list = avg_sv_dict[(nbr_dots_res, qn_res)]
+
+        means = clean_val.(avg_sv_list[1])
+        stds = clean_val.(avg_sv_list[2])
+
+        lower = means
+        upper = means .+ stds
+        CairoMakie.band!(ax, x_range, lower, upper, alpha = 0.3)
+        CairoMakie.lines!(ax, x_range, means)
+        CairoMakie.scatter!(ax, x_range, means,
+            label = "res dots: $(nbr_dots_res), res electrons: $(qn_res)")
+    end
+    CairoMakie.axislegend(ax, position = :rb)
+    CairoMakie.display(fig)
+end
 
 ## ================== Vary SO ==================
 seed = 42899
@@ -16,12 +44,13 @@ function parameters_vary_so(tso)
     )
 end
 
-tso_range = 10 .^ range(-3, 0.1, length = 20)
+tso_range = 10 .^ range(-3, 0.1, length = 10)
 parameters_list = [parameters_vary_so(tso) for tso in tso_range]
 reservoir_settings = [(2, 1), (4, 3)]
 nbr_samples = 10
 t = [100, 200]
-avg_sv_dict = avg_sv_vs_param(reservoir_settings, parameters_list, nbr_samples, t)
+
+@time avg_sv_dict = avg_sv_vs_param(reservoir_settings, parameters_list, nbr_samples, t)
 
 title = "Average smallest singular value vs. SO coupling strength"
 xlabel = "SO coupling strength (relative)"

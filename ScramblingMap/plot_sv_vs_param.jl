@@ -81,3 +81,31 @@ avg_sv_dict = avg_sv_vs_param(reservoir_settings, parameters_list, nbr_samples, 
 title = "Average smallest singular value vs. zeeman splitting of reservoir dots"
 xlabel = "Maximum zeeman splitting of reservoir dots"
 plot_avg_sv_vs_param(avg_sv_dict, ϵb_range, title, xlabel)
+
+## ================== Vary u_intra ==================
+seed = 9823
+Random.seed!(seed)
+
+function parameters_vary_u_intra(u_intra)
+    (
+        ϵ_func_main = () -> 0.5,
+        ϵ_func_res = () -> rand(),
+        ϵb_func = () -> [0, 0, 1],
+        u_intra_func = () -> u_intra * rand(),
+        t_func = () -> rand(),
+        t_so_func = () -> 0.1 * rand(),
+        u_inter_func = () -> rand()
+    )
+end
+
+u_intra_range = 10 .^ range(-3, 2, length = 20)
+parameters_list = [parameters_vary_u_intra(u_intra) for u_intra in u_intra_range]
+reservoir_settings = [(3, 0), (2, 1), (1, 2)]
+nbr_samples = 5
+t = [100, 200]
+
+@time avg_sv_dict = avg_sv_vs_param(reservoir_settings, parameters_list, nbr_samples, t)
+
+title = "U_intra = k * rand()"
+xlabel = "Intra-dot interaction strength (k)"
+#plot_avg_sv_vs_param(avg_sv_dict, u_intra_range, title, xlabel)

@@ -2,7 +2,7 @@ using QDReservoir, LinearAlgebra, Random, Statistics
 import QDReservoir as QDR
 
 # Set BLAS to single-threaded to avoid oversubscription
-BLAS.set_num_threads(1)
+#BLAS.set_num_threads(1)
 ## ===================== Functions ========================
 clean_val(y) = map(x -> abs(x) < 1e-14 ? NaN
                         : x, y)
@@ -23,32 +23,35 @@ function get_ham(grids, parameters)
         parameters.u_intra_func, parameters.t_func, parameters.t_so_func, parameters.u_inter_func)
 end
 
-function smallest_sv(grid, qn_res, hams, t, measurements)
-    # For a given hamiltonian an qn_number, 
-    # compute the smallest singular value of the scrambling map
-    sys = tight_binding_system(grid, qn_res)
-    m_ops = QDR.matrix_representation_ops(measurements, sys.H_total)
-    hams = QDR.matrix_representation_hams(hams, sys)
-    S = scrambling_map(sys, m_ops, ground_state(hams.res), hams.total, t)
+function smallest_sv(sys, m_ops, ham_symb, t)
+    hams_matrix = QDR.matrix_representation_hams(ham_symb, sys)
+    ψ_res = ground_state(hams_matrix.res)
+    S = scrambling_map(
+        sys, m_ops, ψ_res, hams_matrix.total, t)
     return minimum(svdvals(S))
 end
 
 ## ===================== Functions for Singular values vs. reservoir electrons ========================
 
 function avg_sv_vs_qn(nbr_dots_res, t, nbr_samples, parameters)
-    # Vary the number of electrons in the reservoir and compute the average and std
-    # of the smallest singular value of the scrambling map over a set of randomized Hamiltonians
     grid = QDR.generate_grid(2, nbr_dots_res)
     measurements = QDR.charge_probabilities(grid.total)
     n_qn = 2 * nbr_dots_res + 1
-    sv_matrix = zeros(Float64, n_qn, nbr_samples)
-    randomized_hams = [get_ham(grid, parameters) for _ in 1:nbr_samples]
-    jobs = [(qn_res, j) for j in 1:nbr_samples for qn_res in 0:(n_qn - 1)]
 
-    Threads.@threads for k in eachindex(jobs)
-        qn_res, j = jobs[k]
-        sv_matrix[qn_res + 1, j] = smallest_sv(
-            grid, qn_res, randomized_hams[j], t, measurements)
+    sys_list = [tight_binding_system(grid, qn_res) for qn_res in 0:(n_qn - 1)]
+    m_ops_list = [QDR.matrix_representation_ops(measurements, sys.H_total)
+                  for sys in sys_list]
+
+    randomized_hams = [get_ham(grid, parameters) for _ in 1:nbr_samples]
+
+    sv_matrix = zeros(Float64, n_qn, nbr_samples)
+
+    #Threads.@threads for idx in CartesianIndices(sv_matrix)
+    for idx in CartesianIndices(sv_matrix)
+        qn_res_idx, j = Tuple(idx)
+        sv_matrix[idx] = smallest_sv(
+            sys_list[qn_res_idx], m_ops_list[qn_res_idx],
+            randomized_hams[j], t)
     end
 
     mean_sv = vec(mean(sv_matrix, dims = 2))
@@ -71,14 +74,20 @@ end
 function avg_sv_vs_param(nbr_dots_res, qn_res, parameter_list, nbr_samples, t)
     grid = QDR.generate_grid(2, nbr_dots_res)
     measurements = QDR.charge_probabilities(grid.total)
-    randomized_hams = [get_ham(grid, parameter_list[i])
-                       for i in eachindex(parameter_list), j in 1:nbr_samples]
+
+    sys = tight_binding_system(grid, qn_res)
+    m_ops = QDR.matrix_representation_ops(measurements, sys.H_total)
+
+    hams_symb = [get_ham(grid, parameter_list[i])
+                 for i in eachindex(parameter_list), _ in 1:nbr_samples]
+    #hams_symb = [hamiltonians(grid) for _ in eachindex(parameter_list), _ in 1:nbr_samples]
 
     smallest_svs = Matrix{Float64}(undef, length(parameter_list), nbr_samples)
-    Threads.@threads for idx in CartesianIndices(smallest_svs)
+
+    #Threads.@threads for idx in CartesianIndices(smallest_svs)
+    for idx in CartesianIndices(smallest_svs)
         i, j = Tuple(idx)
-        smallest_svs[idx] = smallest_sv(
-            grid, qn_res, randomized_hams[i, j], t, measurements)
+        smallest_svs[idx] = smallest_sv(sys, m_ops, hams_symb[i, j], t)
     end
 
     mean_sv = [sum(smallest_svs[i, :]) / nbr_samples for i in 1:length(parameter_list)]

@@ -74,6 +74,7 @@ end
 using ArnoldiMethod
 struct ArnoldiAlg <: DiagonalizationAlg end
 function eig_state(m::AbstractMatrix, n, ::ArnoldiAlg; kwargs...)
+    # https://github.com/JuliaLinearAlgebra/ArnoldiMethod.jl/issues/149
     decomp, history = try
         partialschur(Hermitian(m), nev = n, which = :SR; kwargs...)
     catch e
@@ -82,12 +83,22 @@ function eig_state(m::AbstractMatrix, n, ::ArnoldiAlg; kwargs...)
         partialschur(Hermitian(m), nev = n, which = :SR; kwargs...,
             mindim = 40, maxdim = size(m, 1), restarts = 1000)
     end
-    # @show history
     vals, vecs = partialeigen(decomp)
     idx = sortperm(real(vals))[n]
     return vecs[:, idx]
-    # vals, vecs
 end
 
-ground_state(m, alg = ArnoldiAlg()) = eig_state(m, 1, alg)
-eig_state(m, n) = eig_state(m, n, ArnoldiAlg())
+using KrylovKit
+struct KrylovAlg <: DiagonalizationAlg end
+
+function eig_state(m::AbstractMatrix, n, ::KrylovAlg; kwargs...)
+    vals, vecs, info = eigsolve(
+        m, n, :SR; kwargs...)
+    if info.converged < n
+        @warn "Only $(info.converged) eigenvalues converged, requested $n"
+    end
+    return vecs[n]
+end
+
+ground_state(m, alg = KrylovAlg()) = eig_state(m, 1, alg)
+eig_state(m, n) = eig_state(m, n, KrylovAlg())

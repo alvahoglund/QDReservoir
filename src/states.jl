@@ -22,7 +22,7 @@ end
 function def_state(state_name, H)
     vac_ind = FermionicHilbertSpaces.state_index(FockNumber(0), H)
     H2, v0 = if ismissing(vac_ind)
-        Haux = hilbert_space(keys(H), push!(copy(basisstates(H)), FockNumber(UInt(0))))
+        Haux = hilbert_space(f, keys(H), push!(copy(basisstates(H)), FockNumber(UInt(0))))
         Haux, vac_state(Haux)
     else
         H, vac_state(H)
@@ -41,7 +41,7 @@ function werner_state(state_name, p, H)
 end
 
 random_state(H) = normalize!(randn(ComplexF64, dim(H)))
-random_product_state(Hs, H) = generalized_kron(random_state.(Hs), Hs => H)
+random_product_state(Hs, H) = tensor_product(random_state.(Hs), Hs => H)
 random_product_state(sys::QuantumDotSystem) = random_product_state(sys.Hs_main, sys.H_main)
 function random_separable_state(nbr_states, Hs, H)
     p = rand(nbr_states)

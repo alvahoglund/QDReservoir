@@ -18,7 +18,7 @@ end
 function get_ground_state(hams, sys)
     ψmain = def_state(singlet, sys.H_main)
     ψres = ground_state(hams.res)
-    ψtot = generalized_kron((ψmain, ψres), (sys.H_main, sys.H_res) => sys.H_total)
+    ψtot = tensor_product((ψmain, ψres), (sys.H_main, sys.H_res) => sys.H_total)
     E_exp = QDR.expectation_value(ψtot, hams.total)
     return ψtot, E_exp
 end

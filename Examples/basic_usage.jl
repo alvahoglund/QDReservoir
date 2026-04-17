@@ -10,7 +10,7 @@ hams = QDR.matrix_representation_hams(hamiltonians(sys.grids), sys)
 ## SET STATE
 ψ_main = def_state(singlet, sys.H_main)
 ψ_res = QDR.ground_state(hams.res)
-ψ_tot = generalized_kron((ψ_main, ψ_res), (sys.H_main, sys.H_res) => sys.H_total)
+ψ_tot = tensor_product((ψ_main, ψ_res), (sys.H_main, sys.H_res) => sys.H_total)
 
 ## Measurements
 m_list = QDR.charge_probabilities(sys)

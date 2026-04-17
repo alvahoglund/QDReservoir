@@ -29,7 +29,7 @@ function scrambling_map(H_main, H_res, H_total, measurements, ψres::AbstractVec
     U = stack(1:N_main) do n
         fill!(e_j, 0)
         e_j[n] = 1.0
-        ψtot = generalized_kron((e_j, ψres), (H_main, H_res) => H_total)
+        ψtot = tensor_product((e_j, ψres), (H_main, H_res) => H_total)
         arnoldi!(Ks, iH, ψtot; tol = alg.tol)
         expv(t, Ks)
     end

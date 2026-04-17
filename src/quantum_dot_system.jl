@@ -1,4 +1,4 @@
-const f = FermionicHilbertSpaces.SymbolicFermionBasis(:f, 0)
+const f = FermionicHilbertSpaces.SymbolicFermionBasis(:f, FermionicHilbertSpaces.FermionicGroup(0))
 const SPINS = (:↑, :↓)
 struct Grids{M, R, T, I}
     main::M
@@ -31,12 +31,12 @@ end
 function tight_binding_system(grids::Grids, qn_res)
     qn_total = qn_res + length(grids.main)
 
-    Hs_main = [hilbert_space(labels((coordinate,)), NumberConservation(1))
+    Hs_main = [hilbert_space(f, labels((coordinate,)), NumberConservation(1))
                for coordinate in grids.main]
     H_main = tensor_product(Hs_main)
-    H_res = hilbert_space(labels(grids.res), NumberConservation(qn_res))
+    H_res = hilbert_space(f, labels(grids.res), NumberConservation(qn_res))
 
-    H_total = hilbert_space(labels(grids.total), NumberConservation(qn_total))
+    H_total = hilbert_space(f, labels(grids.total), NumberConservation(qn_total))
 
     QuantumDotSystem(grids, Hs_main, H_main, H_res, H_total)
 end
@@ -51,4 +51,4 @@ function generate_grid(nbr_dots_main::Int, nbr_dots_res::Int)
     return Grids(grid_main, grid_res, grid_total, grid_intersection)
 end
 
-qn_sector(H::SymmetricFockHilbertSpace) = H.symmetry.conserved_quantity.sectors[1]
+qn_sector(H) = first(sectors(H))

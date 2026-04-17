@@ -1,7 +1,7 @@
 @testset "Charge Probabilities" begin
     # Test probability functions sum to 1
     coordinate = (1, 1)
-    H = hilbert_space([(coordinate, :↑), (coordinate, :↓)], NumberConservation())
+    H = hilbert_space(f, [(coordinate, :↑), (coordinate, :↓)], NumberConservation())
 
     p0_val = matrix_representation(QDR.p0(coordinate), H)
     p1_val = matrix_representation(QDR.p1(coordinate), H)
@@ -12,7 +12,7 @@ end
 
 @testset "Expectation Value of Charge Measurement" begin
     coordinate = (1, 1)
-    H = hilbert_space([(coordinate, :↑), (coordinate, :↓)], NumberConservation(1))
+    H = hilbert_space(f, [(coordinate, :↑), (coordinate, :↓)], NumberConservation(1))
 
     state = [0.5 0.0; 0.0 0.5]
     p1_op = matrix_representation(QDR.p1(coordinate), H)

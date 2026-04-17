@@ -109,8 +109,8 @@ Si2(coordinate_i, H_i) = matrix_representation(3 / 4 * p1(coordinate_i), H_i)
 
 # Operator for S_i ⋅ S_j
 function Sij(coordinate_i, coordinate_j, H)
-    Hi = hilbert_space(labels((coordinate_i,)), NumberConservation(1))
-    Hj = hilbert_space(labels((coordinate_j,)), NumberConservation(1))
+    Hi = hilbert_space(f, labels((coordinate_i,)), NumberConservation(1))
+    Hj = hilbert_space(f, labels((coordinate_j,)), NumberConservation(1))
     ps = pauli_strings((Hi, Hj), H)
     1 / 4 * sum(ps[σ, σ] for σ in [:σx, :σy, :σz])
 end

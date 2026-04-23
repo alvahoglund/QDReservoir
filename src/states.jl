@@ -52,7 +52,7 @@ end
 function random_separable_state(N, sys::QuantumDotSystem)
     random_separable_state(N, sys.Hs_main, sys.H_main)
 end
-density_matrix(v::AbstractVector) = v * v'
+density_matrix(v::AbstractVector) = LowRankMatrix(v, conj(v))
 density_matrix(ρ::AbstractMatrix) = ρ
 
 function hilbert_schmidt_ensemble(H)
@@ -87,6 +87,13 @@ function eig_state(m::AbstractMatrix, n, ::ArnoldiAlg; kwargs...)
     idx = sortperm(real(vals))[n]
     return vecs[:, idx]
     # vals, vecs
+end
+
+using KrylovKit
+struct KrylovKitAlg <: DiagonalizationAlg end
+function eig_state(m::AbstractMatrix, n, ::KrylovKitAlg; kwargs...)
+    vals, vecs, info = eigsolve(m, n, :SR; kwargs...)
+    first(vecs)
 end
 
 ground_state(m, alg = ArnoldiAlg()) = eig_state(m, 1, alg)

@@ -7,6 +7,7 @@ using Reexport
                                         NonCommutativeProducts
 
 using Distributions: Normal
+using LowRankMatrices
 
 export tight_binding_system, hamiltonians, hamiltonian_dots, hamiltonian_interactions
 export random_separable_state, random_product_state, triplet_plus, singlet, ground_state,
@@ -23,5 +24,6 @@ include("measurements.jl")
 include("effective_measurements.jl")
 include("scrambling_map.jl")
 include("regression.jl")
+include("quantum_info.jl")
 
 end

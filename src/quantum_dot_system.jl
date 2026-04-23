@@ -1,4 +1,5 @@
-const f = FermionicHilbertSpaces.SymbolicFermionBasis(:f, FermionicHilbertSpaces.FermionicGroup(0))
+const f = FermionicHilbertSpaces.SymbolicFermionBasis(
+    :f, FermionicHilbertSpaces.FermionicGroup(0))
 const SPINS = (:↑, :↓)
 struct Grids{M, R, T, I}
     main::M
@@ -49,6 +50,10 @@ function generate_grid(nbr_dots_main::Int, nbr_dots_res::Int)
     grid_intersection = vcat(grid_main,
         [coordinate for coordinate in grid_res if coordinate[1] == 2])
     return Grids(grid_main, grid_res, grid_total, grid_intersection)
+end
+
+function Base.keys(H::FermionicHilbertSpaces.AbstractHilbertSpace)
+    map(last ∘ FermionicHilbertSpaces.atomic_id, FermionicHilbertSpaces.atomic_factors(H))
 end
 
 qn_sector(H) = first(sectors(H))

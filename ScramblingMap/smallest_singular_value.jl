@@ -60,12 +60,13 @@ function avg_sv_vs_qn(nbr_dots_res, t, nbr_samples, parameters)
 
     mean_sv = vec(mean(sv_matrix, dims = 2))
     std_sv = vec(std(sv_matrix, dims = 2, corrected = false))
+    median_sv = vec(median(sv_matrix, dims = 2))
 
-    return mean_sv, std_sv
+    return mean_sv, std_sv, median_sv
 end
 
 function avg_sv_vs_res(nbr_dots_res_list, t, nbr_samples, parameters)
-    avg_sv_dict = Dict{Int, Tuple{Vector{Float64}, Vector{Float64}}}()
+    avg_sv_dict = Dict{Int, Tuple{Vector{Float64}, Vector{Float64}, Vector{Float64}}}()
     for nbr_dots_res in nbr_dots_res_list
         println("Calculating for reservoir dots: $(nbr_dots_res)")
         avg_sv_list = avg_sv_vs_qn(nbr_dots_res, t, nbr_samples, parameters)
@@ -106,12 +107,14 @@ function avg_sv_vs_param(nbr_dots_res, qn_res, parameter_list, nbr_samples, t)
     println("Singular values: $(time4-time3)")
     mean_sv = vec(mean(smallest_svs, dims = 2))
     std_sv = vec(std(smallest_svs, dims = 2, corrected = false))
+    median_sv = vec(median(smallest_svs, dims = 2))
 
-    return mean_sv, std_sv
+    return mean_sv, std_sv, median_sv
 end
 
 function avg_sv_vs_param(reservoir_settings, parameter_list, nbr_samples, t)
-    avg_sv_dict = Dict{Tuple{Int, Int}, Tuple{Vector{Float64}, Vector{Float64}}}()
+    avg_sv_dict = Dict{
+        Tuple{Int, Int}, Tuple{Vector{Float64}, Vector{Float64}, Vector{Float64}}}()
     for (nbr_dots_res, qn_res) in reservoir_settings
         println("Calculating for reservoir dots: $(nbr_dots_res), reservoir electrons: $(qn_res)")
         avg_sv_list = avg_sv_vs_param(nbr_dots_res, qn_res, parameter_list, nbr_samples, t)

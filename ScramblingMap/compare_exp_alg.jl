@@ -27,6 +27,13 @@ function compare_methods(sys, params, t)
         QDR.PureStateSteppingPropagatorAlg()))
     println("Fraction difference of smallest singular value:")
     println((ssv_block - minimum(svdvals(S_krylov_step))) / ssv_block)
+
+    println("=====================")
+    println("Diagonalization:")
+    @time S_diag = Matrix(scrambling_map(sys, m_ops, ψ_ground, hams.total, t,
+        QDR.DiagPropagatorAlg()))
+    println("Fraction difference of smallest singular value:")
+    println((ssv_block - minimum(svdvals(S_diag))) / ssv_block)
 end
 
 seed = 2
@@ -37,7 +44,7 @@ params = (
     ϵ_func_main = () -> 0.5,
     ϵ_func_res = () -> rand(),
     ϵb_func = () -> [0, 0, 1],
-    u_intra_func = () -> 1 * (10 + rand()), # <-- Change to vary spectral bandwidth
+    u_intra_func = () -> 100 * (10 + rand()), # <-- Change to vary spectral bandwidth
     t_func = () -> rand(),
     t_so_func = () -> 0.1 * rand(),
     u_inter_func = () -> rand()

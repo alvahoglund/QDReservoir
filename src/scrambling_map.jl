@@ -93,6 +93,23 @@ function scrambling_map(H_main, H_res, H_total, measurements, ψres::AbstractVec
     stack(op -> vec(U' * Diagonal(op) * U), measurements)'
 end
 
+struct DiagPropagatorAlg <: AbstractPropagatorAlg end
+
+function scrambling_map(H_main, H_res, H_total, measurements, ψres::AbstractVector,
+        hamiltonian, t::Number, ::DiagPropagatorAlg)
+    N_main = dim(H_main)
+    F = eigen(Hermitian(Matrix(hamiltonian)))
+    phases = exp.(-im .* F.values .* t)
+    e_j = zeros(ComplexF64, N_main)
+    U = stack(1:N_main) do n
+        fill!(e_j, 0)
+        e_j[n] = 1.0
+        ψtot = generalized_kron((e_j, ψres), (H_main, H_res) => H_total)
+        F.vectors * (phases .* (F.vectors' * ψtot))
+    end
+    stack(op -> vec(U' * Diagonal(op) * U), measurements)'
+end
+
 function scrambling_map(H_main, H_res, H_total, measurements,
         ψres, hamiltonian, t::AbstractArray, alg)
     mapreduce(

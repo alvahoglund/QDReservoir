@@ -36,6 +36,63 @@ function scrambling_map(H_main, H_res, H_total, measurements, ψres::AbstractVec
     stack(op -> vec(U' * Diagonal(op) * U), measurements)'
 end
 
+struct PureStateSteppingPropagatorAlg{T1 <: Number, T2 <: Number} <: AbstractPropagatorAlg
+    krylov_dim::Int
+    tol::Float64
+    step_size::T1
+    step_size_const::T2
+end
+function PureStateSteppingPropagatorAlg(;
+        krylov_dim = 100, tol = 1e-6, step_size = 0, step_size_const = 1)
+    return PureStateSteppingPropagatorAlg(
+        krylov_dim, tol, step_size, step_size_const)
+end
+
+function get_step_size(ham, alg::PureStateSteppingPropagatorAlg)
+    if alg.step_size != 0
+        return alg.step_size
+    end
+    λ_large, _ = eigsolve(ham, rand(ComplexF64, size(ham, 1)), 1, :LR)
+    λ_small, _ = eigsolve(ham, rand(ComplexF64, size(ham, 1)), 1, :SR)
+    bandwidth = real(λ_large[1]) - real(λ_small[1])
+    step_size = alg.step_size_const * (alg.krylov_dim) / bandwidth
+    return step_size
+end
+
+function krylov_step(Ks, iH, ψ::AbstractVector, dt, tol)
+    arnoldi!(Ks, iH, ψ; tol = tol)
+    return expv(dt, Ks)
+end
+
+function expv_stepped(
+        iH, ψtot::AbstractVector, t::Number, alg::PureStateSteppingPropagatorAlg, step_size)
+    Ks = KrylovSubspace{ComplexF64}(length(ψtot), alg.krylov_dim)
+
+    nbr_steps = ceil(Int, abs(t) / min(step_size, abs(t)))
+    dt = t / nbr_steps
+    ψ_step = ψtot
+    for _ in 1:nbr_steps
+        ψ_step = krylov_step(Ks, iH, ψ_step, dt, alg.tol)
+    end
+    return ψ_step
+end
+
+function scrambling_map(H_main, H_res, H_total, measurements, ψres::AbstractVector,
+        hamiltonian, t::Number, alg::PureStateSteppingPropagatorAlg)
+    iH = -im .* hamiltonian
+
+    step_size = get_step_size(hamiltonian, alg)
+    N_main = dim(H_main)
+    e_j = zeros(ComplexF64, N_main)
+    U = stack(1:N_main) do n
+        fill!(e_j, 0)
+        e_j[n] = 1.0
+        ψtot = generalized_kron((e_j, ψres), (H_main, H_res) => H_total)
+        expv_stepped(iH, ψtot, t, alg, step_size)
+    end
+    stack(op -> vec(U' * Diagonal(op) * U), measurements)'
+end
+
 function scrambling_map(H_main, H_res, H_total, measurements,
         ψres, hamiltonian, t::AbstractArray, alg)
     mapreduce(

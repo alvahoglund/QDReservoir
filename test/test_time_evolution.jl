@@ -50,7 +50,7 @@ end
     scrambling_block = scrambling_map(
         qd_system, measurements, ψ_res, ham_total, t, QDR.BlockPropagatorAlg())
     scrambling_pure = scrambling_map(
-        qd_system, measurements, ψ_res, ham_total, t, QDR.PureStatePropagatorAlg())
+        qd_system, measurements, ψ_res, ham_total, t, QDR.KrylovPropagatorAlg())
 
     @test scrambling_block ≈ scrambling_pure
 

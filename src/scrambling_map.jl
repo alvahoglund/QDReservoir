@@ -171,7 +171,6 @@ function scrambling_map(H_main, H_res, H_total, measurements, ψres::AbstractVec
         SteppingKrylovPropagatorAlg(
             alg.krylov_dim, alg.tol, step_size, alg.step_size_const, center)
     end
-    @info "Adaptive algorithm selected: $(typeof(alg)) with step size $step_size and λ_center $center"
     scrambling_map(H_main, H_res, H_total, measurements, ψres, hamiltonian, t, alg)
 end
 

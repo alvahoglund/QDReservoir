@@ -26,7 +26,11 @@ end
 function smallest_sv(sys, m_ops, hams_matrix, ψ_ground, t)
     S = scrambling_map(
         sys, m_ops, ψ_ground, hams_matrix.total, t)
-    return minimum(svdvals(S))
+    svd_vals = svdvals(S)
+    if length(svd_vals) < 16
+        return 0
+    end
+    return minimum(svd_vals)
 end
 
 ## ===================== Functions for Singular values vs. reservoir electrons ========================
@@ -77,9 +81,10 @@ end
 
 ## ================= Smallest singular values vs parameter ========================
 
-function avg_sv_vs_param(nbr_dots_res, qn_res, parameter_list, nbr_samples, t)
+function avg_sv_vs_param(nbr_dots_res, qn_res, parameter_list, nbr_samples,
+        t, measurement_func)
     grid = QDR.generate_grid(2, nbr_dots_res)
-    measurements = QDR.charge_probabilities(grid.total)
+    measurements = measurement_func(grid.total)
     time1 = time()
     sys = tight_binding_system(grid, qn_res)
     m_ops = QDR.matrix_representation_ops(measurements, sys.H_total)
@@ -112,12 +117,14 @@ function avg_sv_vs_param(nbr_dots_res, qn_res, parameter_list, nbr_samples, t)
     return mean_sv, std_sv, median_sv
 end
 
-function avg_sv_vs_param(reservoir_settings, parameter_list, nbr_samples, t)
+function avg_sv_vs_param(reservoir_settings, parameter_list, nbr_samples,
+        t, measurement_func = QDR.charge_probabilities)
     avg_sv_dict = Dict{
         Tuple{Int, Int}, Tuple{Vector{Float64}, Vector{Float64}, Vector{Float64}}}()
     for (nbr_dots_res, qn_res) in reservoir_settings
         println("Calculating for reservoir dots: $(nbr_dots_res), reservoir electrons: $(qn_res)")
-        avg_sv_list = avg_sv_vs_param(nbr_dots_res, qn_res, parameter_list, nbr_samples, t)
+        avg_sv_list = avg_sv_vs_param(nbr_dots_res, qn_res, parameter_list, nbr_samples,
+            t, measurement_func)
         avg_sv_dict[(nbr_dots_res, qn_res)] = avg_sv_list
     end
     return avg_sv_dict

@@ -12,24 +12,24 @@ measurements = charge_measurements(sys)
 t = 1
 
 @time sm_pure = scrambling_map(sys, measurements, ψres, hams.total, t,
-    QDR.PureStatePropagatorAlg(; krylov_dim = 200, tol = 1e-6));
+    QDR.KrylovPropagatorAlg(; krylov_dim = 200, tol = 1e-6));
 ## Check convergence of the scrambling map with respect to the Krylov dimension!
 sm_pures = [scrambling_map(sys, measurements, ψres, hams.total, t,
-                QDR.PureStatePropagatorAlg(; krylov_dim, tol = 1e-6))
+                QDR.KrylovPropagatorAlg(; krylov_dim, tol = 1e-6))
             for krylov_dim in [100, 200, 300]]
 norm.(diff(sm_pures))
 ##
 @profview sm_pure = scrambling_map(sys, measurements, ψres, hams.total, t,
-    QDR.PureStatePropagatorAlg(; krylov_dim = 200, tol = 1e-6));
+    QDR.KrylovPropagatorAlg(; krylov_dim = 200, tol = 1e-6));
 ##
 @time reservoir_state = ground_state(
-    hams.res, QDR.ExactDiagonalizationAlg())
+    hams.res, QDR.DiagonalizationPropagatorAlg())
 @time measurements_total = charge_measurements(sys)
 @time sm_block = scrambling_map(
-    sys, measurements_total, ψres, hams.total, t, QDR.BlockPropagatorAlg());
+    sys, measurements_total, ψres, hams.total, t, QDR.KrylovPropagatorAlg());
 sm_block ≈ sm_pure
 #@time sm_krylov = scrambling_map(quantum_dot_system, measurements, ρres, ham_total, t, QDR.KrylovPropagatorAlg());
-# @profview sm_pure = scrambling_map(quantum_dot_system, measurements, ψres, ham_total, t, QDR.PureStatePropagatorAlg(; krylov_dim=200, tol=1e-6));
+# @profview sm_pure = scrambling_map(quantum_dot_system, measurements, ψres, ham_total, t, QDR.KrylovPropagatorAlg(; krylov_dim=200, tol=1e-6));
 ##
 
 # total_states = map(initial_state -> tensor_product((initial_state, ρres), (sys.H_main, sys.H_res) => sys.H_total), initial_states);
@@ -43,7 +43,7 @@ initial_states = [def_state(triplet_plus, sys.H_main),
 @profview sm = scrambling_map(sys, measurements, ψres, hams.total,
     t, QDR.BlockPropagatorAlg());
 @profview sm = scrambling_map(sys, measurements, ψres, hams.total,
-    t, QDR.PureStatePropagatorAlg());
+    t, QDR.KrylovPropagatorAlg());
 
 #@time measured_values = map(m -> expectation_value(time_evolved_states[3], m), measurements)
 #if nbr_dots_res ≥ 6

@@ -1,6 +1,6 @@
 ##
 using QDReservoir
-using LinearAlgebra, Statistics, GLMakie, Distributions, Random
+using LinearAlgebra, Statistics, Distributions, Random
 import QDReservoir as QDR
 
 ## ======================= Implement EWs =============================

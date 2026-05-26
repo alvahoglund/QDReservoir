@@ -3,15 +3,6 @@ using LinearAlgebra, Statistics, CairoMakie, Distributions
 import QDReservoir as QDR
 
 ## ================= Functions ======================
-function get_ham(grids, ϵ_func, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func)
-    main_system_parameters = QDR.set_dot_params(ϵ_func, ϵb_func, u_intra_func, grids.main)
-    reservoir_parameters = QDR.set_dot_params(ϵ_func, ϵb_func, u_intra_func, grids.res)
-    interaction_parameters = QDR.set_interaction_params(
-        t_func, t_so_func, u_inter_func, grids.total)
-    hamiltonians(grids, main_system_parameters,
-        reservoir_parameters, interaction_parameters)
-end
-
 function trace_distance(ρ1, ρ2)
     return 0.5 * sum(svdvals(ρ1 - ρ2))
 end
@@ -33,13 +24,16 @@ u_intra_func() = rand() + 10
 t_func() = rand()
 t_so_func() = 0.1 * rand()
 u_inter_func() = rand()
+param = QDR.ParamFunctions(
+    ϵ_func_main = ϵ_func, ϵ_func_res = ϵ_func, ϵb_func = ϵb_func, u_intra_func = u_intra_func,
+    t_func = t_func, t_so_func = t_so_func, u_inter_func = u_inter_func)
 
 nbr_dots_res = 6
 qn_res = 3
 sys = tight_binding_system(2, nbr_dots_res, qn_res)
 
 hams = QDR.matrix_representation_hams(
-    get_ham(sys.grids, ϵ_func, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func),
+    QDR.hamiltonians(sys.grids, param),
     sys)
 nbr_states = 1000
 nbr_train = nbr_states ÷ 2

@@ -7,7 +7,7 @@ seed = 2
 Random.seed!(seed)
 
 sys = QDR.tight_binding_system(2, 5, 3)
-params = (
+params = QDR.ParamFunctions(
     ϵ_func_main = () -> 0.5,
     ϵ_func_res = () -> rand(),
     ϵb_func = () -> [0, 0, 1],
@@ -17,7 +17,7 @@ params = (
     u_inter_func = () -> rand()
 )
 t = 100
-hams = QDR.matrix_representation_hams(get_ham(sys.grids, params), sys)
+hams = QDR.matrix_representation_hams(hamiltonians(sys.grids, params), sys)
 m_ops = QDR.matrix_representation_ops(
     QDR.charge_measurements(sys.grids.total), sys.H_total)
 ψ_ground = ground_state(hams.res)

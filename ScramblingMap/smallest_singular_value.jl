@@ -7,22 +7,6 @@ BLAS.set_num_threads(1)
 clean_val(y) = map(x -> abs(x) < 1e-14 ? NaN
                         : x, y)
 
-function get_ham(grids, ϵ_func_main, ϵ_func_res, ϵb_func,
-        u_intra_func, t_func, t_so_func, u_inter_func)
-    main_system_parameters = QDR.set_dot_params(
-        ϵ_func_main, ϵb_func, u_intra_func, grids.main)
-    reservoir_parameters = QDR.set_dot_params(ϵ_func_res, ϵb_func, u_intra_func, grids.res)
-    interaction_parameters = QDR.set_interaction_params(
-        t_func, t_so_func, u_inter_func, grids.total)
-    hamiltonians(grids, main_system_parameters,
-        reservoir_parameters, interaction_parameters)
-end
-
-function get_ham(grids, parameters)
-    get_ham(grids, parameters.ϵ_func_main, parameters.ϵ_func_res, parameters.ϵb_func,
-        parameters.u_intra_func, parameters.t_func, parameters.t_so_func, parameters.u_inter_func)
-end
-
 function smallest_sv(sys, m_ops, hams_matrix, ψ_ground, t)
     S = scrambling_map(
         sys, m_ops, ψ_ground, hams_matrix.total, t)
@@ -43,7 +27,7 @@ function avg_sv_vs_qn(nbr_dots_res, t, nbr_samples, parameters)
     sys_list = map(Base.Fix1(tight_binding_system, grid), 0:(n_qn - 1))
     m_ops_list = map(
         sys -> QDR.matrix_representation_ops(measurements, sys.H_total), sys_list)
-    hams_symb = [get_ham(grid, parameters) for _ in 1:nbr_samples]
+    hams_symb = [QDR.hamiltonians(grid, parameters) for _ in 1:nbr_samples]
 
     hams_mat = Matrix{QDR.Hamiltonians}(undef, n_qn, nbr_samples)
     for idx in CartesianIndices(hams_mat)
@@ -93,7 +77,7 @@ function avg_sv_vs_param(nbr_dots_res, qn_res, parameter_list, nbr_samples,
     println("Set ops: $(time2 - time1)")
 
     hams_symb = map(
-        Base.Fix1(get_ham, grid), [p for p in parameter_list, _ in 1:nbr_samples])
+        Base.Fix1(QDR.hamiltonians, grid), [p for p in parameter_list, _ in 1:nbr_samples])
     hams_mat = map(Base.Fix2(QDR.matrix_representation_hams, sys), hams_symb)
     ψ_ground = map(ham_mat -> ground_state(ham_mat.res), hams_mat)
 

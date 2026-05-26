@@ -10,6 +10,16 @@ struct InteractionParams{D1, D2, D3}
     u_inter::D3
 end
 
+struct ParamFunctions{F1, F2, F3, F4, F5, F6, F7}
+    ϵ_func_main::F1
+    ϵ_func_res::F2
+    ϵb_func::F3
+    u_intra_func::F4
+    t_func::F5
+    t_so_func::F6
+    u_inter_func::F7
+end
+
 struct Hamiltonians{M, R, I, T, DM <: DotParams, DR <: DotParams, DI <: InteractionParams}
     main::M
     res::R
@@ -121,6 +131,39 @@ function hamiltonian_so_y(t_so, grid)
 end
 
 ## ========= Set Dot Parameters =============
+function ParamFunctions(;
+        ϵ_func_main, ϵ_func_res, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func)
+    ParamFunctions(
+        ϵ_func_main, ϵ_func_res, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func)
+end
+
+function random_param_functions(; ϵ_main = 0.5, ϵ_res = 1, ϵb = [0, 0, 1],
+        u_intra = 1.0, t = 1.0, t_so = 0.1, u_inter = 1.0)
+    ParamFunctions(
+        ϵ_func_main = () -> ϵ_main,
+        ϵ_func_res = () -> rand() * ϵ_res,
+        ϵb_func = () -> ϵb,
+        u_intra_func = () -> u_intra * 10 + rand(),
+        t_func = () -> rand() * t,
+        t_so_func = () -> t_so * rand(),
+        u_inter_func = () -> u_inter * rand()
+    )
+end
+
+function equal_param_functions(;
+        ϵ_main = 0.0, ϵ_res = 0.0, ϵb = [0, 0, 0], u_intra = 10.0, t = 1.0,
+        t_so = 0.0, u_inter = 0.0)
+    ParamFunctions(
+        ϵ_func_main = () -> ϵ_main,
+        ϵ_func_res = () -> ϵ_res,
+        ϵb_func = () -> ϵb,
+        u_intra_func = () -> u_intra,
+        t_func = () -> t,
+        t_so_func = () -> t_so,
+        u_inter_func = () -> u_inter
+    )
+end
+
 function set_dot_params(ϵ_func, ϵb_func, u_intra_func, grid)
     ϵ = Dict(coordinate => ϵ_func() for coordinate in grid)
     ϵb = Dict(coordinate => ϵb_func() for coordinate in grid)
@@ -148,41 +191,6 @@ function get_coupled_coordinates(grid)
     return vcat(coupled_coordinates_x, coupled_coordinates_y)
 end
 
-function default_main_system_dot_params(grid)
-    ϵ_func() = 0.5
-    ϵb_func() = [0, 0, 1]
-    u_intra_func() = rand() + 10
-    return set_dot_params(ϵ_func, ϵb_func, u_intra_func, grid)
-end
-
-function default_res_dot_params(grid)
-    ϵ_func() = rand()
-    ϵb_func() = [0, 0, 1]
-    u_intra_func() = rand() + 10
-    return set_dot_params(ϵ_func, ϵb_func, u_intra_func, grid)
-end
-
-function default_interaction_params(grid)
-    t_func() = rand()
-    t_so_func() = 0.1 * rand()
-    u_inter_func() = rand()
-    return set_interaction_params(t_func, t_so_func, u_inter_func, grid)
-end
-
-function default_equal_dot_params(grid)
-    ϵ_val() = 0.0
-    ϵb_val() = [0, 0, 0]
-    u_intra_val() = 10.0
-    return set_dot_params(ϵ_val, ϵb_val, u_intra_val, grid)
-end
-
-function default_equal_interaction_params(grid)
-    t_val() = 1.0
-    t_so_val() = 0.0
-    u_inter_val() = 0.0
-    return set_interaction_params(t_val, t_so_val, u_inter_val, grid)
-end
-
 ## ========= System Hamiltonians =============
 
 function hamiltonian_dots(dot_params, grid)
@@ -205,16 +213,19 @@ end
 
 function hamiltonians(grids, seed = nothing)
     isnothing(seed) || Random.seed!(seed)
-    dot_params_main = default_main_system_dot_params(grids.main)
-    dot_params_res = default_res_dot_params(grids.res)
-    interaction_params = default_interaction_params(grids.total)
-    hamiltonians(grids, dot_params_main, dot_params_res, interaction_params)
+    hamiltonians(grids, random_param_functions())
 end
 
 function hamiltonians_equal_param(grids)
-    dot_params_main = default_equal_dot_params(grids.main)
-    dot_params_res = default_equal_dot_params(grids.res)
-    interaction_params = default_equal_interaction_params(grids.total)
+    hamiltonians(grids, equal_param_functions())
+end
+
+function hamiltonians(grids, pf::ParamFunctions)
+    dot_params_main = set_dot_params(
+        pf.ϵ_func_main, pf.ϵb_func, pf.u_intra_func, grids.main)
+    dot_params_res = set_dot_params(pf.ϵ_func_res, pf.ϵb_func, pf.u_intra_func, grids.res)
+    interaction_params = set_interaction_params(
+        pf.t_func, pf.t_so_func, pf.u_inter_func, grids.total)
     hamiltonians(grids, dot_params_main, dot_params_res, interaction_params)
 end
 

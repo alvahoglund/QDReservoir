@@ -44,20 +44,8 @@ end
 seed = 42899
 Random.seed!(seed)
 
-function parameters_vary_so(tso)
-    (
-        ϵ_func_main = () -> 0.5,
-        ϵ_func_res = () -> rand(),
-        ϵb_func = () -> [0, 0, 1],
-        u_intra_func = () -> 10 + rand(),
-        t_func = () -> rand(),
-        t_so_func = () -> tso * rand(),
-        u_inter_func = () -> rand()
-    )
-end
-
 tso_range = range(0, 1, length = 20)
-parameters_list = [parameters_vary_so(tso) for tso in tso_range]
+parameters_list = [QDR.random_param_functions(tso = tso) for tso in tso_range]
 reservoir_settings = [
     (3, 0), (3, 1), (3, 2), (3, 3), (2, 0), (2, 1), (2, 2), (4, 0), (4, 1),
     (4, 2), (4, 3), (4, 4), (5, 0), (5, 1), (5, 2), (5, 3), (5, 4), (5, 5)]
@@ -79,20 +67,8 @@ plot_avg_sv_vs_param(data["avg_sv_dict_so"], data["tso_range"], title, xlabel)
 seed = 23498
 Random.seed!(seed)
 
-function parameters_vary_t(t)
-    (
-        ϵ_func_main = () -> 0.5,
-        ϵ_func_res = () -> rand(),
-        ϵb_func = () -> [0, 0, 1],
-        u_intra_func = () -> 10 + rand(),
-        t_func = () -> t * rand(),
-        t_so_func = () -> 0.1 * rand(),
-        u_inter_func = () -> rand()
-    )
-end
-
 t_range = range(0, 10, length = 20)
-parameters_list = [parameters_vary_so(t) for t in t_range]
+parameters_list = [QDR.random_param_functions(t = t) for t in t_range]
 reservoir_settings = [
     (3, 0), (3, 1), (3, 2), (3, 3), (2, 0), (2, 1), (2, 2), (4, 0), (4, 1),
     (4, 2), (4, 3), (4, 4), (5, 0), (5, 1), (5, 2), (5, 3), (5, 4), (5, 5)]
@@ -114,20 +90,8 @@ plot_avg_sv_vs_param(data["avg_sv_dict_t"], data["t_range"], title, xlabel)
 seed = 30298
 Random.seed!(seed)
 
-function parameters_vary_ϵb(ϵb)
-    (
-        ϵ_func_main = () -> 0.5,
-        ϵ_func_res = () -> rand(),
-        ϵb_func = () -> [0, 0, ϵb],
-        u_intra_func = () -> 10 + rand(),
-        t_func = () -> rand(),
-        t_so_func = () -> 0.1 * rand(),
-        u_inter_func = () -> rand()
-    )
-end
-
 ϵb_range = range(0, 5, length = 20)
-parameters_list = [parameters_vary_ϵb(ϵb) for ϵb in ϵb_range]
+parameters_list = [QDR.random_param_functions(ϵb = ϵb) for ϵb in ϵb_range]
 reservoir_settings = [
     (3, 0), (3, 1), (3, 2), (3, 3), (2, 0), (2, 1), (2, 2), (4, 0), (4, 1),
     (4, 2), (4, 3), (4, 4), (5, 0), (5, 1), (5, 2), (5, 3), (5, 4), (5, 5)]
@@ -147,21 +111,9 @@ plot_avg_sv_vs_param(data["avg_sv_dict_eb"], data["ϵb_range"], title, xlabel)
 ## ================== Vary u_intra ==================
 seed = 9823
 Random.seed!(seed)
-
-function parameters_vary_u_intra(u_intra)
-    (
-        ϵ_func_main = () -> 0.5,
-        ϵ_func_res = () -> rand(),
-        ϵb_func = () -> [0, 0, 1],
-        u_intra_func = () -> u_intra * (10 + rand()),
-        t_func = () -> rand(),
-        t_so_func = () -> 0.1 * rand(),
-        u_inter_func = () -> rand()
-    )
-end
-
 u_intra_range = range(0, 10, length = 30)
-parameters_list = [parameters_vary_u_intra(u_intra) for u_intra in u_intra_range]
+parameters_list = [QDR.random_param_functions(u_intra = u_intra)
+                   for u_intra in u_intra_range]
 reservoir_settings = [
     (3, 0), (3, 1), (3, 2), (3, 3), (2, 0), (2, 1), (2, 2), (4, 0), (4, 1),
     (4, 2), (4, 3), (4, 4), (5, 0), (5, 1), (5, 2), (5, 3), (5, 4), (5, 5)]
@@ -176,7 +128,7 @@ t = [100, 200]
 ##
 data = load("ScramblingMap/sv_vs_param_data/avg_sv_dict_uintra.jld2")
 
-title = "U_intra = k * (10 + rand())"
+title = "U_intra = k * 10 + rand()"
 xlabel = "Intra-dot interaction strength (k)"
 fig = plot_avg_sv_vs_param(data["avg_sv_dict_uintra"], data["u_intra_range"], title, xlabel)
 
@@ -184,20 +136,9 @@ fig = plot_avg_sv_vs_param(data["avg_sv_dict_uintra"], data["u_intra_range"], ti
 seed = 9823
 Random.seed!(seed)
 
-function parameters_vary_u_inter(u_inter)
-    (
-        ϵ_func_main = () -> 0.5,
-        ϵ_func_res = () -> rand(),
-        ϵb_func = () -> [0, 0, 1],
-        u_intra_func = () -> (10 + rand()),
-        t_func = () -> rand(),
-        t_so_func = () -> 0.1 * rand(),
-        u_inter_func = () -> u_inter * rand()
-    )
-end
-
 u_inter_range = range(0, 10, length = 30)
-parameters_list = [parameters_vary_u_inter(u_inter) for u_inter in u_inter_range]
+parameters_list = [QDR.random_param_functions(u_inter = u_inter)
+                   for u_inter in u_inter_range]
 reservoir_settings = [
     (3, 0), (3, 1), (3, 2), (3, 3), (2, 0), (2, 1), (2, 2), (4, 0), (4, 1),
     (4, 2), (4, 3), (4, 4), (5, 0), (5, 1), (5, 2), (5, 3), (5, 4), (5, 5)]

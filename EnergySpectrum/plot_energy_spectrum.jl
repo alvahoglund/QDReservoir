@@ -3,18 +3,6 @@ using LinearAlgebra
 import QDReservoir as QDR
 using Plots
 
-function get_ham(
-        grids, ϵ_func_main, ϵ_func_res, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func)
-    main_system_params = QDR.set_dot_params(
-        ϵ_func_main, ϵb_func, u_intra_func, grids.main)
-    res_params = QDR.set_dot_params(
-        ϵ_func_res, ϵb_func, u_intra_func, grids.res)
-    interaction_params = QDR.set_interaction_params(
-        t_func, t_so_func, u_inter_func, grids.total)
-    hamiltonians(
-        grids, main_system_params, res_params, interaction_params)
-end
-
 function get_ground_state(hams, sys)
     ψmain = def_state(singlet, sys.H_main)
     ψres = ground_state(hams.res)
@@ -95,8 +83,10 @@ t_func() = rand()
 t_so_func() = 0.1 * rand()
 u_inter_func() = rand()
 
-grids = QDR.generate_grid(2, nbr_dots_res)
-ham_tot = get_ham(
-    grids, ϵ_func_main, ϵ_func_res, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func)
+params = QDR.ParamFunctions(
+    ϵ_func_main = ϵ_func_main, ϵ_func_res = ϵ_func_res, ϵb_func = ϵb_func, u_intra_func = u_intra_func,
+    t_func = t_func, t_so_func = t_so_func, u_inter_func = u_inter_func)
 
+grids = QDR.generate_grid(2, nbr_dots_res)
+ham_tot = hamiltonians(grids, params)
 plot_spectrum(ham_tot, nbr_dots_res)

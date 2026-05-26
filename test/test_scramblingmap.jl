@@ -12,7 +12,7 @@ function make_test_system(; u_intra = 10.0, t = 1.0, t_so = 0.1, u_inter = 1.0)
     ham_total = matrix_representation(hams.total, qd_system.H_total)
     ham_res = matrix_representation(hams.res, qd_system.H_res)
     ψ_res = QDR.eig_state(ham_res, 2)
-    measurements = charge_measurements(qd_system)
+    measurements = QDR.charge_probabilities(qd_system)
     return qd_system, measurements, ψ_res, ham_total
 end
 

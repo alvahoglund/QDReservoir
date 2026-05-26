@@ -35,7 +35,7 @@ end
         initial_state -> tensor_product((initial_state, ρres),
             (qd_system.H_main, qd_system.H_res) => qd_system.H_total),
         initial_states)
-    measurements = charge_measurements(qd_system)
+    measurements = QDR.charge_probabilities(qd_system)
 
     t = 10
     ham_total = matrix_representation(hams.total, qd_system.H_total)

@@ -55,11 +55,13 @@ expectation_value(ρ, op::AbstractMatrix) = process_complex((tr(density_matrix(�
 variance(ρ, op) = expectation_value(ρ, op^2) - expectation_value(ρ, op)^2
 
 ## ======== Measurement sets =================
+zero_charge_probabilities(grid) = map(p0, grid)
 single_charge_probabilities(grid) = map(p1, grid)
 double_charge_probabilities(grid) = map(p2, grid)
 
 function charge_probabilities(grid)
-    vcat(single_charge_probabilities(grid), double_charge_probabilities(grid))
+    vcat(zero_charge_probabilities(grid), single_charge_probabilities(grid),
+        double_charge_probabilities(grid))
 end
 
 single_charge_measurements(grid) = map(nbr_op, grid)

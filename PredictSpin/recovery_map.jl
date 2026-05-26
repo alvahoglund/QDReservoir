@@ -100,7 +100,7 @@ hams = QDR.matrix_representation_hams(QDR.hamiltonians(sys.grids, seed), sys)
 ρ_res = ground_state(hams.res)
 t_list = [100, 200]
 σE = 10^-4
-measurements = QDR.charge_measurements(sys)
+measurements = QDR.charge_probabilities(sys)
 Pm, Pm_dict = QDR.pauli_matrix(sys.Hs_main, sys.H_main)
 S = scrambling_map(sys, measurements, ρ_res, hams.total, t_list)
 

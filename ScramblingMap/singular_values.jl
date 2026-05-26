@@ -36,15 +36,6 @@ end
 
 clean_val(y) = map(x -> abs(x) < 1e-10 ? 0.0 : x, y)
 
-function get_ham(grids, ϵ_func, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func)
-    main_system_parameters = QDR.set_dot_params(ϵ_func, ϵb_func, u_intra_func, grids.main)
-    reservoir_parameters = QDR.set_dot_params(ϵ_func, ϵb_func, u_intra_func, grids.res)
-    interaction_parameters = QDR.set_interaction_params(
-        t_func, t_so_func, u_inter_func, grids.total)
-    hamiltonians(grids, main_system_parameters,
-        reservoir_parameters, interaction_parameters)
-end
-
 ## ===================== Parameters and system generation ========================
 nbr_dots_main = 2
 nbr_dots_res = 6
@@ -57,9 +48,12 @@ u_intra_func() = 10 * rand()
 t_func() = 1 * rand()
 t_so_func() = 0
 u_inter_func() = 1 * rand()
+param = QDR.ParamFunctions(
+    ϵ_func_main = ϵ_func, ϵ_func_res = ϵ_func, ϵb_func = ϵb_func, u_intra_func = u_intra_func,
+    t_func = t_func, t_so_func = t_so_func, u_inter_func = u_inter_func)
 
 hams = QDR.matrix_representation_hams(
-    get_ham(sys.grids, ϵ_func, ϵb_func, u_intra_func, t_func, t_so_func, u_inter_func), sys)
+    QDR.hamiltonians(sys.grids, param), sys)
 #hams = QDR.matrix_representation_hams(QDR.hamiltonians_equal_param(sys.grids), sys)
 measurements = QDR.charge_probabilities(sys)
 

@@ -143,7 +143,7 @@ function random_param_functions(; ϵ_main = 0.5, ϵ_res = 1, ϵb = [0, 0, 1],
         ϵ_func_main = () -> ϵ_main,
         ϵ_func_res = () -> rand() * ϵ_res,
         ϵb_func = () -> ϵb,
-        u_intra_func = () -> u_intra * (rand() * 10),
+        u_intra_func = () -> u_intra * 10 + rand(),
         t_func = () -> rand() * t,
         t_so_func = () -> t_so * rand(),
         u_inter_func = () -> u_inter * rand()

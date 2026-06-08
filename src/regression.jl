@@ -29,3 +29,8 @@ function split_train_test(X, Y, train_fraction = 0.5)
 end
 
 mse(Y_true, Y_pred) = mean((Y_true - Y_pred) .^ 2)
+
+function mse_prediction(S_SVD, Pm, σE, b)
+    real.(diag(Pm' * S_SVD.V * diagm((b * σE^2) ./ (b .* S_SVD.S .^ 2 .+ σE^2)) * S_SVD.V' *
+               Pm))
+end

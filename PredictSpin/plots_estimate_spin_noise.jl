@@ -1,37 +1,31 @@
-
-function plot_varying_noise(
-        σE_list, mse_list, mse_pred_list, S_SVD, sv_overlaps, Pm_dict, ps_list)
-    """
-    Plots the MSE of predicting the spin measurement for varying noise levels, 
-        along with the predicted MSE from the SVD analysis and vertical lines indicating 
-        the singular values weighted by their overlaps with the measurement operator.
-    """
-    fig = Figure(size = (600, 250))
-    ax = nothing
+function plot_varying_noise!(
+        gl, σE_list, mse_list, mse_pred_list, S_SVD, sv_overlaps, Pm_dict, ps_list, b)
+    first_ax = nothing
     for (i, ps) in enumerate(ps_list)
         idx = Pm_dict[ps...]
-        ax = Axis(fig[1, i], xlabel = "Noise level (σE)", ylabel = "Mean Squared Error",
-            title = "Measurement: $(ps[1]) ⊗ $(ps[2])",
-            xscale = log10)
+        ax = Axis(gl[1, i], xlabel = "Noise level (σE)", ylabel = "MSE",
+            title = "Estimating $(ps[1]) ⊗ $(ps[2])", xscale = log10,
+            xgridvisible = false, ygridvisible = false)
         lines!(ax, σE_list, mse_list[:, idx], label = "MSE")
-        #vlines!(ax, [10^-4, 10^-2], linestyle = :dash, color = :grey)
-        lines!(ax, σE_list, mse_pred_list[:, idx], label = "Predicted MSE")
+        lines!(ax, σE_list, mse_pred_list[:, idx], label = "Predicted \nMSE")
         vlines!(ax, sqrt(b) .* S_SVD.S, color = sv_overlaps[:, idx],
             colormap = :Blues, colorrange = (-0.5, maximum(sv_overlaps[:, idx])),
-            linestyle = :dash, label = "√b*σS")
-        #axislegend(position = :lt)
+            linestyle = :dash, label = "√b·σS")
+        i == 1 && (first_ax = ax)
     end
-    Legend(fig[2, 1:length(ps_list)], ax,
-        orientation = :horizontal, framevisible = false)
+    axislegend(first_ax, position = :lt, framevisible = false)
+end
+
+function plot_varying_noise(
+        σE_list, mse_list, mse_pred_list, S_SVD, sv_overlaps, Pm_dict, ps_list, b)
+    fig = Figure(size = (600, 250))
+    plot_varying_noise!(fig.layout, σE_list, mse_list, mse_pred_list,
+        S_SVD, sv_overlaps, Pm_dict, ps_list, b)
     return fig
 end
 
-function plot_mode_decomposition(mse_mat_small, mse_mat_large, S_SVD, Pm, Pm_dict, ps, b)
-    """
-    Plots the decomposition of the MSE into contributions from each singular mode of the system, 
-        for a specific measurement operator. Also plots the predicted MSE from the SVD analysis, 
-        and vertical lines indicating the singular values weighted by their overlaps with the measurement operator.
-    """
+function plot_mode_decomposition!(
+        gl, σE_list, mse_mat_small, mse_mat_large, S_SVD, Pm, Pm_dict, ps, b)
     idx = Pm_dict[ps...]
     sv_overlaps = SV_overlap(S_SVD, Pm)[:, idx]
 
@@ -42,9 +36,9 @@ function plot_mode_decomposition(mse_mat_small, mse_mat_large, S_SVD, Pm, Pm_dic
     contribs_sorted = contributions[:, order]
     σ_sorted = S_SVD.S[order]
 
-    fig = Figure(size = (700, 300))
-    ax = Axis(fig[1, 1], xlabel = "Noise level (σE)", ylabel = "MSE contribution",
-        title = "MSE of predicting $(ps[1]) ⊗ $(ps[2])", xscale = log10)
+    ax = Axis(gl[1, 1], xlabel = "Noise level (σE)", ylabel = "MSE contribution",
+        title = "MSE of predicting $(ps[1]) ⊗ $(ps[2])", xscale = log10,
+        xgridvisible = false, ygridvisible = false)
 
     σ_min, σ_max = extrema(σ_sorted)
     cmap = :viridis
@@ -68,13 +62,19 @@ function plot_mode_decomposition(mse_mat_small, mse_mat_large, S_SVD, Pm, Pm_dic
     end
 
     lines!(ax, σE_list, cumulative, color = :grey, linewidth = 3, label = "Predicted MSE")
-
     lines!(ax, σE_list, mse_mat_small[:, idx], color = :black,
         linewidth = 2, label = "Small N MSE")
     lines!(ax, σE_list, mse_mat_large[:, idx], color = :black,
         linestyle = :dash, linewidth = 3, label = "Large N MSE")
-    Colorbar(fig[1, 2], limits = (σ_min, σ_max), colormap = cmap,
-        label = "Singular value σ_k")
-    axislegend(position = :lt)
-    display(fig)
+    Colorbar(
+        gl[1, 2], limits = (σ_min, σ_max), colormap = cmap, label = "Singular value σ_k")
+    axislegend(ax, position = :lt)
+end
+
+function plot_mode_decomposition(
+        σE_list, mse_mat_small, mse_mat_large, S_SVD, Pm, Pm_dict, ps, b)
+    fig = Figure(size = (700, 300))
+    plot_mode_decomposition!(
+        fig.layout, σE_list, mse_mat_small, mse_mat_large, S_SVD, Pm, Pm_dict, ps, b)
+    return fig
 end

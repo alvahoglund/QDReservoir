@@ -37,6 +37,6 @@ plot_mse_weights(nbr_states_list1, mse_matrix, W_list)
 mse_matrix_noisy = vcat([r.mse' for r in model_result_noisy]...)
 W_list_noisy = [r.weight_err for r in model_result_noisy]
 fig1 = plot_mse_weights_compare(
-    nbr_states_list1, nbr_states_list2, mse_matrix, mse_matrix_noisy, W_list, W_list_noisy)
+    nbr_states_list1, nbr_states_list2, mse_matrix, mse_matrix_noisy, W_list, W_list_noisy, σE)
 #Save the figure
 #save("Figures/mse_weights_comparison.png", fig1)

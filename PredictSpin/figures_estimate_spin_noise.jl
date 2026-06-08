@@ -34,7 +34,7 @@ mse_list = vcat([get_mse(X_large, Y_large, σE)' for σE in σE_list]...)
 mse_pred_list = vcat([mse_prediction(S_SVD, Pm, σE, b)' for σE in σE_list]...)
 
 fig1 = plot_varying_noise(
-    σE_list, mse_list, mse_pred_list, S_SVD, sv_overlaps, Pm_dict, ps_list)
+    σE_list, mse_list, mse_pred_list, S_SVD, sv_overlaps, Pm_dict, ps_list, b)
 #save("Figures/varying_noise_spin_estimation.png", fig1)
 
 ## ===== PLOT MODE DECOMPOSITION ===========
@@ -44,5 +44,5 @@ mse_mat_small = vcat([get_mse(X_small, Y_small, σE)' for σE in σE_list]...)
 mse_mat_large = vcat([get_mse(X_large, Y_large, σE)' for σE in σE_list]...)
 
 fig2 = plot_mode_decomposition(
-    mse_mat_small, mse_mat_large, S_SVD, Pm, Pm_dict, (:σy, :σx), b)
+    σE_list, mse_mat_small, mse_mat_large, S_SVD, Pm, Pm_dict, (:σy, :σx), b)
 #save("Figures/mode_decomposition_σy_σx.png", fig2)

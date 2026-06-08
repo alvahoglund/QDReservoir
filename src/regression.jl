@@ -1,7 +1,11 @@
 function ridge_regression(X_train, Y_train, λ::Number = 0)
+    if λ == 0
+        return pinv(X_train) * Y_train
+    end
+
     U, s, V = svd(X_train)
-    d = s ./ (s .^ 2 .+ λ)
-    W = V * Diagonal(d) * (U' * Y_train)
+    D = Diagonal(s ./ (s .^ 2 .+ λ))
+    W = V * D * U' * Y_train
     return W
 end
 
@@ -16,3 +20,12 @@ function degree_2_polynomial_feature_transformation(X)
     hcat(X, X .^ 2,
         [X[:, i] .* X[:, j] for i in 1:n_features for j in (i + 1):n_features]...)
 end
+
+function split_train_test(X, Y, train_fraction = 0.5)
+    nbr_train = round(Int, size(X, 1) * train_fraction)
+    X_train, X_test = X[1:nbr_train, :], X[(nbr_train + 1):end, :]
+    Y_train, Y_test = Y[1:nbr_train, :], Y[(nbr_train + 1):end, :]
+    return X_train, X_test, Y_train, Y_test
+end
+
+mse(Y_true, Y_pred) = mean((Y_true - Y_pred) .^ 2)

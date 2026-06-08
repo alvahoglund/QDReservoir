@@ -1,10 +1,6 @@
-using QDReservoir
-using LinearAlgebra, Statistics, CairoMakie, Distributions
-import QDReservoir as QDR
-##  ======================= Plotting Functions =============================
 function plot_training_vs_test(plot_paulis, Y_test, Y_pred, Pm_dict, mean_squared_error, σE)
     x_vals = range(-1, 1, length = 100)
-    fig = Figure(fontsize = 15)
+    fig = Figure(fontsize = 15, size = (200 + 300 * length(plot_paulis), 400))
     for (i, ps) in enumerate(plot_paulis)
         idx = Pm_dict[ps...]
         ax = Axis(fig[1, i],
@@ -21,7 +17,7 @@ function plot_training_vs_test(plot_paulis, Y_test, Y_pred, Pm_dict, mean_square
 end
 
 function plot_training(plot_paulis, Y_train, Pm_dict)
-    fig_train = Figure(fontsize = 15)
+    fig_train = Figure(fontsize = 15, size = (200 + 300 * length(plot_paulis), 400))
 
     for (i, ps) in enumerate(plot_paulis)
         idx = Pm_dict[ps...]
@@ -38,7 +34,7 @@ function plot_training(plot_paulis, Y_train, Pm_dict)
 end
 
 function plot_test(plot_paulis, Y_test, Pm_dict)
-    fig_test = Figure(fontsize = 15)
+    fig_test = Figure(fontsize = 15, size = (200 + 300 * length(plot_paulis), 400))
 
     for (i, ps) in enumerate(plot_paulis)
         idx = Pm_dict[ps...]
@@ -55,7 +51,7 @@ function plot_test(plot_paulis, Y_test, Pm_dict)
 end
 
 function plot_test_and_prediction(plot_paulis, Y_test, Y_pred, Pm_dict, mean_squared_error)
-    fig_test_pred = Figure(fontsize = 15)
+    fig_test_pred = Figure(fontsize = 15, size = (200 + 300 * length(plot_paulis), 400))
 
     for (i, ps) in enumerate(plot_paulis)
         idx = Pm_dict[ps...]
@@ -91,64 +87,3 @@ function test_S_row_space(S)
         end
     end
 end
-## ================= Parameters for system generation ======================
-
-ϵ_func() = 0.5
-ϵb_func() = [0, 0, 1]
-u_intra_func() = rand() + 10
-t_func() = rand()
-t_so_func() = 0.1 * rand()
-u_inter_func() = rand()
-
-params = QDR.ParamFunctions(
-    ϵ_func_main = ϵ_func, ϵ_func_res = ϵ_func, ϵb_func = ϵb_func, u_intra_func = u_intra_func,
-    t_func = t_func, t_so_func = t_so_func, u_inter_func = u_inter_func)
-
-nbr_dots_res = 6
-qn_res = 3
-sys = tight_binding_system(2, nbr_dots_res, qn_res)
-
-seed = 1234
-Random.seed!(seed)
-hams = QDR.matrix_representation_hams(QDR.hamiltonians(sys.grids, params), sys)
-nbr_states = 1000
-nbr_train = nbr_states ÷ 2
-nbr_test = nbr_states - nbr_train
-σE = 0
-t = 100
-
-# Charge Measurements, X 
-measurements = map(m -> matrix_representation(m, sys.H_total),
-    QDR.charge_probabilities(sys.grids.total))
-Ω = stack(vec(QDR.hilbert_schmidt_ensemble(sys.H_main)) for i in 1:nbr_states)
-S = scrambling_map(sys, measurements, ground_state(hams.res),
-    hams.total, t)
-
-X = QDR.process_complex.((S * Ω)')
-E = rand(Normal(0, σE), size(X))
-X̃ = X + E
-
-X_train, X_test = X̃[1:nbr_train, :], X̃[(nbr_train + 1):nbr_states, :]
-
-# Spin Measurements, Y 
-Pm, Pm_dict = QDR.pauli_matrix(sys.Hs_main, sys.H_main)
-Y = QDR.process_complex.((Pm' * Ω)')
-Y_train, Y_test = Y[1:nbr_train, :], Y[(nbr_train + 1):nbr_states, :]
-
-# Regression 
-W = pinv(X_train) * Y_train
-W_expected = pinv(S') * Pm
-println("norm(W - W_expected): ", norm(W - W_expected))
-
-Y_pred = X_test * W
-mean_squared_error = mean((Y_test - Y_pred) .^ 2, dims = 1)
-
-## ===================== Plotting ============================
-plot_paulis = [
-    (:σz, :σz)
-]
-plot_training_vs_test(plot_paulis, Y_test, Y_pred, Pm_dict, mean_squared_error, σE)
-plot_test_and_prediction(plot_paulis, Y_test, Y_pred, Pm_dict, mean_squared_error)
-plot_test(plot_paulis, Y_test, Pm_dict)
-plot_training(plot_paulis, Y_train, Pm_dict)
-test_S_row_space(S)

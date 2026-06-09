@@ -50,7 +50,7 @@ Legend(fig[1, 2], ax1)
 
 save("Figures/compare_tasks_performance.png", fig)
 
-## Plot linear entanglement detection weights for different noise levels
+## =============== LINEAR ENTANGLEMENT DETECTION =================
 σE_samples = [10^(-5), 10^(-2)]
 λ = 0
 X_ent_linear = get_charge_measurements(S, Ω_ent_linear)
@@ -89,3 +89,35 @@ gl_legend = GridLayout(fig_lew[3, 1:2])
 
 Legend(gl_legend[1, 1], ax21, framevisible = false, orientation = :horizontal)
 save("Figures/linear_entanglement_detection.png", fig_lew)
+
+## =============== NONLINEAR ENTANGLEMENT DETECTION =================
+X_ent_nonlinear = get_charge_measurements(S, Ω_ent_nonlinear)
+X_sep_nonlinear = get_charge_measurements(S, Ω_sep_nonlinear)
+
+σE = 10^-3
+λ = 0
+
+X̃_ent = QDR.add_noise(X_ent_nonlinear, σE)
+X̃_sep = QDR.add_noise(X_sep_nonlinear, σE)
+
+section_size = length(sys.grids.total) * 3
+feature_transformation_alg = QDR.Polynomial2SectionFeatureTransformation(section_size)
+W_noisy, Y_pred_noisy, Y_test = construct_EW(X̃_ent, X̃_sep, σE, feature_transformation_alg)
+W_lownoise, Y_pred_lownoise, _ = construct_EW(
+    X_ent_nonlinear, X_sep_nonlinear, 1e-5, feature_transformation_alg)
+
+Ω_sub_ent, Ω_sub_sep = project_on_sub_spin_basis(Ω_ent_nonlinear, Ω_sep_nonlinear)
+
+fig_new = Figure(size = (800, 420))
+gl1 = GridLayout(fig_new[1, 1])
+plot_nonlinear_db_spin_space!(
+    gl1, Ω_sub_sep, Ω_sub_ent, W_lownoise, feature_transformation_alg,
+    title = "Nonlinear decision boundary, σE = $(format_σE(1e-5))")
+
+gl2 = GridLayout(fig_new[1, 2])
+ax = Axis(
+    gl2[1, 1], title = "Decision value for \n Singlet Werner state, σE = $(format_σE(σE))")
+test_werner_state!(
+    ax, [QDR.singlet, QDR.triplet_0, QDR.triplet_plus, QDR.triplet_minus], W_noisy, S, σE,
+    feature_transformation_alg, state_labels = ["S", "T0", "T+", "T-"])
+save("Figures/nonlinear_entanglement_detection.png", fig_new)

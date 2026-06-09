@@ -34,11 +34,13 @@ end
 
 # ==================== Plot in XX, YY, ZZ space ============================
 
-function plot_nonlinear_db_spin_space(
-        Ω_sub_sep, Ω_sub_ent, W, feature_transformation_alg; n_grid = 25)
+function plot_nonlinear_db_spin_space!(
+        gl, Ω_sub_sep, Ω_sub_ent, W, feature_transformation_alg;
+        n_grid = 25, title = "Nonlinear decision boundary")
     Pm_sub = get_sub_spin_basis(sys)
     grid = range(-1, 1, length = n_grid)
-
+    step_sep = 1
+    step_ent = 100
     function eval_point(xx, yy, zz)
         X_vec = QDR.process_complex.(S * (Pm_sub * [1.0, xx, yy, zz] ./ 4))
         X_poly = QDR.feature_transformation(
@@ -47,19 +49,29 @@ function plot_nonlinear_db_spin_space(
     end
     vals = Float32[eval_point(xx, yy, zz) for xx in grid, yy in grid, zz in grid]
 
-    fig = Figure()
-    ax = Axis3(fig[1, 1], xlabel = "XX", ylabel = "YY", zlabel = "ZZ",
-        title = "Nonlinear decision boundary in spin space")
+    ax = Axis3(gl[1, 1], xlabel = "⟨σx⊗σx⟩", ylabel = "⟨σy⊗σy⟩", zlabel = "⟨σz⊗σz⟩",
+        title = title)
 
-    scatter!(ax, Ω_sub_sep[1:10:end, 2], Ω_sub_sep[1:10:end, 3], Ω_sub_sep[1:10:end, 4],
+    scatter!(ax, Ω_sub_sep[1:step_sep:end, 2],
+        Ω_sub_sep[1:step_sep:end, 3], Ω_sub_sep[1:step_sep:end, 4],
         label = "Separable", markersize = 5)
     scatter!(
-        ax, Ω_sub_ent[1:1000:end, 2], Ω_sub_ent[1:1000:end, 3], Ω_sub_ent[1:1000:end, 4],
+        ax, Ω_sub_ent[1:step_ent:end, 2],
+        Ω_sub_ent[1:step_ent:end, 3], Ω_sub_ent[1:step_ent:end, 4],
         label = "Entangled", markersize = 5)
 
     # Isosurface at classifier output = 0 (the decision boundary)
     volume!(ax, (-1, 1), (-1, 1), (-1, 1), vals;
         algorithm = :iso, isovalue = 0.0f0, isorange = 0.1f0, alpha = 0.5)
+
+    Legend(gl[2, 1], ax, orientation = :horizontal, framevisible = false)
+end
+
+function plot_nonlinear_db_spin_space(
+        Ω_sub_sep, Ω_sub_ent, W, feature_transformation_alg; n_grid = 25)
+    fig = Figure()
+    plot_nonlinear_db_spin_space!(
+        fig, Ω_sub_sep, Ω_sub_ent, W, feature_transformation_alg; n_grid)
     display(fig)
 end
 
@@ -89,7 +101,7 @@ end
 
 function plot_linear_db_spin_space(Ω_sep_spin, Ω_ent_spin, W_spin)
     fig = Figure()
-    ax = Axis3(fig[1, 1], xlabel = "XX", ylabel = "YY", zlabel = "ZZ",
+    ax = Axis3(fig[1, 1], xlabel = "⟨σx⊗σx⟩", ylabel = "⟨σy⊗σy⟩", zlabel = "⟨σz⊗σz⟩",
         title = "Ridge regression classification in XX, YY, ZZ space")
     plot_linear_db_spin_space!(ax, Ω_sep_spin, Ω_ent_spin, W_spin)
     return fig
@@ -114,11 +126,16 @@ end
 
 function test_werner_state!(
         ax, state_list, W, S, σE = 0,
-        feature_transformation_alg = QDR.IdentityFeatureTransformation())
+        feature_transformation_alg = QDR.IdentityFeatureTransformation();
+        state_labels = nothing)
     ax.xlabel = "p"
     ax.ylabel = "Classifier output"
     frac_correct = []
     nbr_test_states = 1000
+    n = length(state_list)
+    blues = [cgrad(:Blues)[t] for t in range(0.4, 0.9, length = n)]
+    oranges = [cgrad(:Oranges)[t] for t in range(0.4, 0.9, length = n)]
+    labels = isnothing(state_labels) ? ["$i" for i in 1:n] : state_labels
     for (i, state) in enumerate(state_list)
         p_range_sep = range(2 / 3, 1, length = nbr_test_states)
         p_range_ent = range(0, 2 / 3, length = nbr_test_states)
@@ -132,8 +149,10 @@ function test_werner_state!(
         X_ent_poly = QDR.feature_transformation(X̃_ent, feature_transformation_alg)
         Y_sep_pred = X_sep_poly * W
         Y_ent_pred = X_ent_poly * W
-        scatter!(ax, p_range_sep, Y_sep_pred)
-        scatter!(ax, p_range_ent, Y_ent_pred)
+        scatter!(
+            ax, p_range_sep, Y_sep_pred; color = blues[i], label = "Separable $(labels[i])")
+        scatter!(ax, p_range_ent, Y_ent_pred; color = oranges[i],
+            label = "Entangled $(labels[i])")
         vlines!(
             ax, [1 / 3, 2 / 3], linestyle = :dash, color = :grey)
         hlines!(
@@ -143,14 +162,16 @@ function test_werner_state!(
 
         push!(frac_correct, get_fraction_correct_classes(Y_test, Y_pred))
     end
+    axislegend(ax, position = :rb)
     return frac_correct
 end
 
 function test_werner_state(state_list, W, S, σE = 0,
-        feature_transformation_alg = QDR.IdentityFeatureTransformation())
+        feature_transformation_alg = QDR.IdentityFeatureTransformation(); state_labels = nothing)
     fig = Figure()
     ax = Axis(fig[1, 1], xlabel = "p", ylabel = "Classifier output")
-    frac_correct = test_werner_state!(ax, state_list, W, S, σE, feature_transformation_alg)
+    frac_correct = test_werner_state!(
+        ax, state_list, W, S, σE, feature_transformation_alg, state_labels = state_labels)
     return fig, frac_correct
 end
 

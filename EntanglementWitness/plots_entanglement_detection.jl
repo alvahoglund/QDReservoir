@@ -63,29 +63,36 @@ function plot_nonlinear_db_spin_space(
     display(fig)
 end
 
+function plot_linear_db_spin_space!(
+        gl, Ω_sep_spin, Ω_ent_spin, W_spin, title = "Linear decision boundary")
+    ax1 = Axis3(gl[1, 1], xlabel = "⟨σx⊗σx⟩", ylabel = "⟨σy⊗σy⟩", zlabel = "⟨σz⊗σz⟩",
+        title = title, xticks = [-1, 0, 1], yticks = [-1, 0, 1], zticks = [-1, 0, 1])
+    plot_states_sep = 1
+    plot_states_ent = 800
+    scatter!(ax1,
+        Ω_sep_spin[1:plot_states_sep:end, 2],
+        Ω_sep_spin[1:plot_states_sep:end, 3],
+        Ω_sep_spin[1:plot_states_sep:end, 4],
+        label = "Separable", markersize = 5
+    )
+
+    scatter!(ax1,
+        Ω_ent_spin[1:plot_states_ent:end, 2],
+        Ω_ent_spin[1:plot_states_ent:end, 3],
+        Ω_ent_spin[1:plot_states_ent:end, 4],
+        label = "Entangled", markersize = 5
+    )
+    x_range, y_range, db_plane = get_linear_db(W_spin)
+    surface!(ax1, x_range, y_range, db_plane)
+    return ax1
+end
+
 function plot_linear_db_spin_space(Ω_sep_spin, Ω_ent_spin, W_spin)
     fig = Figure()
     ax = Axis3(fig[1, 1], xlabel = "XX", ylabel = "YY", zlabel = "ZZ",
         title = "Ridge regression classification in XX, YY, ZZ space")
-    plot_states_sep = 10
-    plot_states_ent = 500
-    scatter!(ax,
-        Ω_sep_spin[1:plot_states_sep:end, 2],
-        Ω_sep_spin[1:plot_states_sep:end, 3],
-        Ω_sep_spin[1:plot_states_sep:end, 4],
-        label = "Separable states", markersize = 5
-    )
-
-    scatter!(ax,
-        Ω_ent_spin[1:plot_states_ent:end, 2],
-        Ω_ent_spin[1:plot_states_ent:end, 3],
-        Ω_ent_spin[1:plot_states_ent:end, 4],
-        label = "Entangled states", markersize = 5
-    )
-    x_range, y_range, db_plane = get_linear_db(W_spin)
-    surface!(ax, x_range, y_range, db_plane, label = "Decision boundary")
-
-    display(fig)
+    plot_linear_db_spin_space!(ax, Ω_sep_spin, Ω_ent_spin, W_spin)
+    return fig
 end
 
 # =================== Plot accuracy ============================
@@ -105,10 +112,11 @@ function plot_test_vs_pred_ew(Y_test, Y_pred)
     display(fig)
 end
 
-function test_werner_state(
-        state_list, W, S, σE = 0, feature_transformation_alg = QDR.IdentityFeatureTransformation())
-    fig = Figure()
-    ax = Axis(fig[1, 1], xlabel = "p", ylabel = "Classifier output")
+function test_werner_state!(
+        ax, state_list, W, S, σE = 0,
+        feature_transformation_alg = QDR.IdentityFeatureTransformation())
+    ax.xlabel = "p"
+    ax.ylabel = "Classifier output"
     frac_correct = []
     nbr_test_states = 1000
     for (i, state) in enumerate(state_list)
@@ -127,7 +135,7 @@ function test_werner_state(
         scatter!(ax, p_range_sep, Y_sep_pred)
         scatter!(ax, p_range_ent, Y_ent_pred)
         vlines!(
-            ax, [2 / 3], linestyle = :dash, color = :grey)
+            ax, [1 / 3, 2 / 3], linestyle = :dash, color = :grey)
         hlines!(
             ax, [0], linestyle = :dash, color = :red)
         Y_test = vcat(ones(nbr_test_states), (-1) .* ones(nbr_test_states))
@@ -135,6 +143,14 @@ function test_werner_state(
 
         push!(frac_correct, get_fraction_correct_classes(Y_test, Y_pred))
     end
+    return frac_correct
+end
+
+function test_werner_state(state_list, W, S, σE = 0,
+        feature_transformation_alg = QDR.IdentityFeatureTransformation())
+    fig = Figure()
+    ax = Axis(fig[1, 1], xlabel = "p", ylabel = "Classifier output")
+    frac_correct = test_werner_state!(ax, state_list, W, S, σE, feature_transformation_alg)
     return fig, frac_correct
 end
 

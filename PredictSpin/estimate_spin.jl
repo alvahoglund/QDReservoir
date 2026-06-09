@@ -56,8 +56,3 @@ function vary_training_data(sys, X_test, Y_test, S, Pm, σE, b, nbr_states_list)
         evaluate_model(Ω_train, X_test, Y_test, S, Pm, σE, b)
     end
 end
-
-function mse_prediction(S_SVD, Pm, σE, b)
-    real.(diag(Pm' * S_SVD.V * diagm((b * σE^2) ./ (b .* S_SVD.S .^ 2 .+ σE^2)) * S_SVD.V' *
-               Pm))
-end

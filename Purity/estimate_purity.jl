@@ -23,9 +23,9 @@ function estimate_purity(X, Y, σE)
     λ = 0
     X̃ = QDR.add_noise(X, σE)
     X̃_train, X̃_test, Y_train, Y_test = QDR.split_train_test(X̃, Y)
-    feature_transformation_func = QDR.degree_2_polynomial_feature_transformation
-    X̃_train_poly = feature_transformation_func(X̃_train)
-    X̃_test_poly = feature_transformation_func(X̃_test)
+    feature_transformation_alg = QDR.Polynomial2SectionFeatureTransformation(24)
+    X̃_train_poly = QDR.feature_transformation(X̃_train, feature_transformation_alg)
+    X̃_test_poly = QDR.feature_transformation(X̃_test, feature_transformation_alg)
     W, Y_pred = QDR.ridge_regression(X̃_train_poly, Y_train, X̃_test_poly, λ)
     return W, Y_pred, Y_test
 end

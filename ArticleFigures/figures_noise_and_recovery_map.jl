@@ -2,9 +2,9 @@ using QDReservoir
 using LinearAlgebra, Statistics, CairoMakie, Distributions, JLD2
 import QDReservoir as QDR
 
-includet("estimate_spin.jl")
-includet("plots_estimate_spin_noise.jl")
-includet("plots_recovery_map.jl")
+includet("..//PredictSpin//estimate_spin.jl")
+includet("..//PredictSpin//plots_estimate_spin_noise.jl")
+includet("..//PredictSpin//plots_recovery_map.jl")
 
 ## ================= Load system ======================
 S = load("DefaultSystems/scrambling_map_A.jld2", "S")
@@ -56,5 +56,4 @@ plot_varying_noise!(
     gl_bottom, σE_list, mse_list, mse_pred_list, S_SVD, sv_overlaps, Pm_dict, ps_list, b)
 rowgap!(fig.layout, 1, 20)
 
-fig
-#save("Figures/spin_overview.png", fig)
+save("Figures/spin_estimation.png", fig)

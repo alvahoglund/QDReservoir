@@ -94,7 +94,7 @@ save("Figures/linear_entanglement_detection.png", fig_lew)
 X_ent_nonlinear = get_charge_measurements(S, Ω_ent_nonlinear)
 X_sep_nonlinear = get_charge_measurements(S, Ω_sep_nonlinear)
 
-σE = 10^-3
+σE = 10^-2
 λ = 0
 
 X̃_ent = QDR.add_noise(X_ent_nonlinear, σE)
@@ -108,7 +108,7 @@ W_lownoise, Y_pred_lownoise, _ = construct_EW(
 
 Ω_sub_ent, Ω_sub_sep = project_on_sub_spin_basis(Ω_ent_nonlinear, Ω_sep_nonlinear)
 
-fig_new = Figure(size = (800, 420))
+fig_new = Figure(size = (800, 450))
 gl1 = GridLayout(fig_new[1, 1])
 plot_nonlinear_db_spin_space!(
     gl1, Ω_sub_sep, Ω_sub_ent, W_lownoise, feature_transformation_alg,
@@ -117,7 +117,7 @@ plot_nonlinear_db_spin_space!(
 gl2 = GridLayout(fig_new[1, 2])
 ax = Axis(
     gl2[1, 1], title = "Decision value for \n Singlet Werner state, σE = $(format_σE(σE))")
-test_werner_state!(
+fraction_correct = test_werner_state!(
     ax, [QDR.singlet, QDR.triplet_0, QDR.triplet_plus, QDR.triplet_minus], W_noisy, S, σE,
     feature_transformation_alg, state_labels = ["S", "T0", "T+", "T-"])
 save("Figures/nonlinear_entanglement_detection.png", fig_new)

@@ -1,8 +1,12 @@
-includet("ridge_classifier_EW.jl")
-
+includet("entanglement_detection.jl")
+includet("plots_entanglement_detection.jl")
+using JLD2, GLMakie
 ## ============= NONLINEAR ENTANGLEMENT WITNESS FOR WERNER STATES    =====================
-sys, hams = default_system()
-S = default_scrambling(sys, hams)
+S = load("DefaultSystems/scrambling_map_A.jld2", "S")
+sys = load("DefaultSystems/scrambling_map_A.jld2", "sys")
+
+section_size = length(sys.grids.total) * 3
+feature_transformation_alg = QDR.Polynomial2SectionFeatureTransformation(section_size)
 
 nbr_sep_states = 10^5
 nbr_ent_states = 10^5
@@ -17,36 +21,39 @@ X_ent = get_charge_measurements(S, Ω_ent)
 X_sep = get_charge_measurements(S, Ω_sep)
 
 ## ============ Example of nonlinear Entanglement Witness for Werner states ==============
-σE = 10^-5
+σE = 10^-3
 λ = 0
 
-X̃_ent = add_noise(σE, X_ent)
-X̃_sep = add_noise(σE, X_sep)
+X̃_ent = QDR.add_noise(X_ent, σE)
+X̃_sep = QDR.add_noise(X_sep, σE)
 
-feature_transformation_func = QDR.degree_2_polynomial_feature_transformation
-W, Y_pred, Y_test = construct_EW(X_ent, X_sep, σE, feature_transformation_func)
+section_size = length(sys.grids.total) * 3
+W, Y_pred, Y_test = construct_EW(X̃_ent, X̃_sep, σE, feature_transformation_alg)
 
+##
 plot_test_vs_pred_ew(Y_test, Y_pred)
 Ω_sub_ent, Ω_sub_sep = project_on_sub_spin_basis(Ω_ent, Ω_sep)
 plot_nonlinear_db_spin_space(
-    Ω_sub_sep, Ω_sub_ent, W, feature_transformation_func)
+    Ω_sub_sep, Ω_sub_ent, W, feature_transformation_alg)
 
 Ω_ent_noisy = (X̃_ent * pinv(S'))'
 Ω_sep_noisy = (X̃_sep * pinv(S'))'
 Ω_sub_ent_noisy, Ω_sub_sep_noisy = project_on_sub_spin_basis(
     Ω_ent_noisy, Ω_sep_noisy)
 plot_nonlinear_db_spin_space(
-    Ω_sub_sep_noisy, Ω_sub_ent_noisy, W, feature_transformation_func)
+    Ω_sub_sep_noisy, Ω_sub_ent_noisy, W, feature_transformation_alg)
 
-test_werner_state(
-    states, W, S,
-    feature_transformation_func)
+get_fraction_correct_classes(Y_test, Y_pred)
 
+fig, frac_correct = test_werner_state(
+    states, W, S, σE,
+    feature_transformation_alg)
+fig
 ## =========== Plot accuracy of nonlinear EW for varying noise levels ================
 σE_list = 10 .^ range(-7, 0, length = 20)
-
+feature_transformation_alg = QDR.Polynomial2SectionFeatureTransformation(section_size)
 EW_list = [construct_EW(X_ent, X_sep, σE,
-               QDR.degree_2_polynomial_feature_transformation)
+               feature_transformation_alg)
            for σE in σE_list]
 
 W_list = getindex.(EW_list, 1)
@@ -60,11 +67,11 @@ plot_ew_fraction_correct(σE_list, fraction_correct_list)
 
 # Plot accuracy of werner states against noise levels
 EW_performance = test_werner_state_against_noise(
-    states, W_list, S, σE_list, QDR.degree_2_polynomial_feature_transformation)
+    states, W_list, S, σE_list, feature_transformation_alg)
 
 # Plot accuracy of separable states against noise levels
 EW_performance_sep = test_separable_state_against_noise(
-    W_list, S, σE_list, QDR.degree_2_polynomial_feature_transformation)
+    W_list, S, σE_list, feature_transformation_alg)
 
 state_labels = ["Singlet", "Triplet 0", "Triplet +", "Triplet -",
     "Separable 1", "Separable 2", "Separable 3", "Separable 4"]

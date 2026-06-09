@@ -1,5 +1,5 @@
 module QDReservoir
-using LinearAlgebra, Random, Arpack, SparseArrays, LinearMaps
+using LinearAlgebra, Random, Arpack, SparseArrays, LinearMaps, Statistics
 using ExponentialUtilities
 using Reexport
 @reexport using FermionicHilbertSpaces

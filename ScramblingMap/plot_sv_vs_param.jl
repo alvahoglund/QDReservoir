@@ -58,10 +58,10 @@ t = [100, 200]
 #    avg_sv_dict_so, tso_range, nbr_samples, t)
 
 ##
-data = load("ScramblingMap/sv_vs_param_data/avg_sv_dict_so.jld2")
+data_so = load("ScramblingMap/sv_vs_param_data/avg_sv_dict_so.jld2")
 title = "Vary Spin Orbit Coupling"
 xlabel = "SO coupling strength (relative)"
-plot_avg_sv_vs_param(data["avg_sv_dict_so"], data["tso_range"], title, xlabel)
+plot_avg_sv_vs_param(data_so["avg_sv_dict_so"], data_so["tso_range"], title, xlabel)
 
 ## ================== Vary t ===================
 seed = 23498
@@ -80,11 +80,11 @@ t = [100, 200]
 #    avg_sv_dict_t, t_range, nbr_samples, t)
 
 ##
-data = load("ScramblingMap/sv_vs_param_data/avg_sv_dict_t.jld2")
+data_t = load("ScramblingMap/sv_vs_param_data/avg_sv_dict_t.jld2")
 
 title = "Vary tunneling"
 xlabel = "Tunneling coupling strength"
-plot_avg_sv_vs_param(data["avg_sv_dict_t"], data["t_range"], title, xlabel)
+plot_avg_sv_vs_param(data_t["avg_sv_dict_t"], data_t["t_range"], title, xlabel)
 
 ## ================== Vary ϵb ==================
 seed = 30298
@@ -102,11 +102,11 @@ t = [100, 200]
 #    avg_sv_dict_eb, ϵb_range, nbr_samples, t)
 
 ##
-data = load("ScramblingMap/sv_vs_param_data/avg_sv_dict_eb.jld2")
+data_eb = load("ScramblingMap/sv_vs_param_data/avg_sv_dict_eb.jld2")
 
 title = "Vary applied magnetic field"
 xlabel = "Zeeman splitting of all dots"
-plot_avg_sv_vs_param(data["avg_sv_dict_eb"], data["ϵb_range"], title, xlabel)
+plot_avg_sv_vs_param(data_eb["avg_sv_dict_eb"], data_eb["ϵb_range"], title, xlabel)
 
 ## ================== Vary u_intra ==================
 seed = 9823
@@ -126,11 +126,12 @@ t = [100, 200]
 #    avg_sv_dict_uintra, u_intra_range, nbr_samples, t)
 
 ##
-data = load("ScramblingMap/sv_vs_param_data/avg_sv_dict_uintra.jld2")
+data_uintra = load("ScramblingMap/sv_vs_param_data/avg_sv_dict_uintra_krylov_1000_tol_10.jld2")
 
 title = "U_intra = k * 10 + rand()"
 xlabel = "Intra-dot interaction strength (k)"
-fig = plot_avg_sv_vs_param(data["avg_sv_dict_uintra"], data["u_intra_range"], title, xlabel)
+fig = plot_avg_sv_vs_param(
+    data_uintra["avg_sv_dict_uintra"], data_uintra["u_intra_range"], title, xlabel)
 
 ## ================== Vary u_inter ==================
 seed = 9823
@@ -151,8 +152,42 @@ t = [100, 200]
 #    avg_sv_dict_uinter, u_inter_range, nbr_samples, t)
 
 ##
-data = load("ScramblingMap/sv_vs_param_data/avg_sv_dict_uinter.jld2")
+data_uinter = load("ScramblingMap/sv_vs_param_data/avg_sv_dict_uinter_test.jld2")
 
 title = "U_inter = k * rand())"
 xlabel = "Inter-dot interaction strength (k)"
-fig = plot_avg_sv_vs_param(data["avg_sv_dict_uinter"], data["u_inter_range"], title, xlabel)
+fig = plot_avg_sv_vs_param(
+    data_uinter["avg_sv_dict_uinter"], data_uinter["u_inter_range"], title, xlabel)
+##
+
+normalize_range(r) = collect(r) ./ maximum(r)
+
+function plot_sv_vs_param!(ax, setting)
+    for (sv_dict, x_range, label) in [
+        (data_eb["avg_sv_dict_eb"], data_eb["ϵb_range"], "ϵb"),
+        (data_so["avg_sv_dict_so"], data_so["tso_range"], "SO"),
+        (data_uintra["avg_sv_dict_uintra"], data_uintra["u_intra_range"], "U_intra")
+    ]
+        med = sv_dict[setting][3]
+        std = sv_dict[setting][2]
+        x = normalize_range(x_range)
+        CairoMakie.band!(ax, x, med, med .+ std, alpha = 0.3)
+        CairoMakie.lines!(ax, x, med, label = label)
+    end
+    axislegend(ax, position = :rb)
+end
+
+##
+settings = [(3, 3), (5, 3)]
+fig = Figure(size = (400 * length(settings), 300))
+axs = [Axis(fig[1, i],
+           ylabel = "Median smallest SV", xlabel = "Normalized parameter",
+           title = "$(setting[1]) dots, $(setting[2]) electrons",
+           yscale = Makie.Symlog10(1e-10),
+           yticks = (
+               [0, 1e-6, 1e-4, 1e-2, 1e-1, 1], ["0", "10⁻⁶", "10⁻⁴", "10⁻²", "10⁻¹", "1"]))
+       for (i, setting) in enumerate(settings)]
+for (ax, setting) in zip(axs, settings)
+    plot_sv_vs_param!(ax, setting)
+end
+fig

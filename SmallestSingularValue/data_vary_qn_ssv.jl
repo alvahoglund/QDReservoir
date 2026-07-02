@@ -16,5 +16,6 @@ nbr_dots_res_list = [2, 3, 4, 5]
 ssv_dict = avg_sv_vs_res(
     nbr_dots_res_list, time_eval, nbr_samples, ham_params, charge_probabilities_4)
 
-jldsave("ScramblingMap/data_vary_qn_ssv/data_vary_qn_ssv_measure_all_dots_2dots.jld2";
+jldsave(
+    "SmallestSingularValue/data_vary_qn_ssv/data_vary_qn_ssv_measure_all_dots_2dots.jld2";
     ssv_dict, nbr_dots_res_list, time_eval, nbr_samples)

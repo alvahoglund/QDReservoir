@@ -4,12 +4,12 @@ includet("plots_smallest_singular_value.jl")
 
 fig_sup = Figure(size = (1200, 800))
 ## ======== Plot smallest singular value vs_params ========
-data_so = load("ScramblingMap/data_vary_param_ssv/avg_sv_dict_so.jld2")["ssv_dict_so"]
-data_ϵb = load("ScramblingMap/data_vary_param_ssv/avg_sv_dict_eb.jld2")["ssv_dict_eb"]
-data_uintra = load("ScramblingMap/data_vary_param_ssv/avg_sv_dict_uintra.jld2")["ssv_dict_uintra"]
-data_uinter = load("ScramblingMap/data_vary_param_ssv/avg_sv_dict_uinter.jld2")["ssv_dict_uinter"]
-data_t = load("ScramblingMap/data_vary_param_ssv/avg_sv_dict_t.jld2")["ssv_dict_t"]
-parameter_range = load("ScramblingMap/data_vary_param_ssv/avg_sv_dict_uinter.jld2")["u_inter_range"]
+data_so = load("SmallestSingularValue/data_vary_param_ssv/avg_sv_dict_so.jld2")["ssv_dict_so"]
+data_ϵb = load("SmallestSingularValue/data_vary_param_ssv/avg_sv_dict_eb.jld2")["ssv_dict_eb"]
+data_uintra = load("SmallestSingularValue/data_vary_param_ssv/avg_sv_dict_uintra.jld2")["ssv_dict_uintra"]
+data_uinter = load("SmallestSingularValue/data_vary_param_ssv/avg_sv_dict_uinter.jld2")["ssv_dict_uinter"]
+data_t = load("SmallestSingularValue/data_vary_param_ssv/avg_sv_dict_t.jld2")["ssv_dict_t"]
+parameter_range = load("SmallestSingularValue/data_vary_param_ssv/avg_sv_dict_uinter.jld2")["u_inter_range"]
 datasets = [data_ϵb, data_uintra, data_uinter, data_t, data_so]
 labels = [L"\epsilon_b", L"U_\mathrm{intra}", L"U_\mathrm{inter}", L"t", L"t_{SO}"]
 
@@ -37,9 +37,9 @@ fig
 save("ssv_vs_param.png", fig)
 
 ## ======== Plot smallest singular value vs_time ========
-data_time = load("ScramblingMap/data_vary_time_ssv/avg_sv_dict_time.jld2")["ssv_dict_time"]
-data_time_double = load("ScramblingMap/data_vary_time_ssv/avg_sv_dict_time_multiplex.jld2")["ssv_dict_time_multiplex"]
-time_list = first.(load("ScramblingMap/data_vary_time_ssv/avg_sv_dict_time.jld2")["time_list"])
+data_time = load("SmallestSingularValue/data_vary_time_ssv/avg_sv_dict_time.jld2")["ssv_dict_time"]
+data_time_double = load("SmallestSingularValue/data_vary_time_ssv/avg_sv_dict_time_multiplex.jld2")["ssv_dict_time_multiplex"]
+time_list = first.(load("SmallestSingularValue/data_vary_time_ssv/avg_sv_dict_time.jld2")["time_list"])
 
 function add_time_panel!(gl)
     ax1_time = Axis(gl[1, 1])
@@ -56,8 +56,8 @@ add_time_panel!(fig[1, 1:2])
 fig
 
 ## ======= Plot smallest singular value vs qn ========
-data_qn = load("ScramblingMap/data_vary_qn_ssv/data_vary_qn_ssv_measure_all_dots_100200.jld2")["ssv_dict"]
-nbr_dots_res_list = load("ScramblingMap/data_vary_qn_ssv/data_vary_qn_ssv_measure_all_dots_100200.jld2")["nbr_dots_res_list"]
+data_qn = load("SmallestSingularValue/data_vary_qn_ssv/data_vary_qn_ssv_measure_all_dots_100200.jld2")["ssv_dict"]
+nbr_dots_res_list = load("SmallestSingularValue/data_vary_qn_ssv/data_vary_qn_ssv_measure_all_dots_100200.jld2")["nbr_dots_res_list"]
 
 function add_qn_panel!(ql)
     ax_qn = Axis(ql, yscale = Makie.Symlog10(1e-5),
@@ -81,11 +81,11 @@ add_qn_panel!(fig[1, 1])
 fig
 
 ## ========= Plot smallest singular value vs multiplexing =========
-data_ham_multiplex = load("ScramblingMap/data_hamiltonian_multiplex_ssv/data_ham_multiplex_ssv.jld2")["sv_dict_ham_multiplexing"]
-data_time_multiplex = load("ScramblingMap/data_time_multiplex_ssv/data_time_multiplex_ssv.jld2")["ssv_dict_time_multiplex"]
-data_nothing_multiplex = load("ScramblingMap/data_hamiltonian_multiplex_ssv/data_nothing_multiplex_ssv.jld2")["sv_dict_nothing_multiplexing"]
-data_time_multiplex_late = load("ScramblingMap/data_time_multiplex_ssv/data_time_multiplex_ssv_timeframe.jld2")["ssv_dict_time_multiplex"]
-times = load("ScramblingMap/data_time_multiplex_ssv/data_time_multiplex_ssv.jld2")["times_multiplexing"]
+data_ham_multiplex = load("SmallestSingularValue/data_hamiltonian_multiplex_ssv/data_ham_multiplex_ssv.jld2")["sv_dict_ham_multiplexing"]
+data_time_multiplex = load("SmallestSingularValue/data_time_multiplex_ssv/data_time_multiplex_ssv.jld2")["ssv_dict_time_multiplex"]
+data_nothing_multiplex = load("SmallestSingularValue/data_hamiltonian_multiplex_ssv/data_nothing_multiplex_ssv.jld2")["sv_dict_nothing_multiplexing"]
+data_time_multiplex_late = load("SmallestSingularValue/data_time_multiplex_ssv/data_time_multiplex_ssv_timeframe.jld2")["ssv_dict_time_multiplex"]
+times = load("SmallestSingularValue/data_time_multiplex_ssv/data_time_multiplex_ssv.jld2")["times_multiplexing"]
 
 ##
 fig = Figure(size = (600, 300))

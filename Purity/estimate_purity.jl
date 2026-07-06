@@ -29,8 +29,3 @@ function estimate_purity(X, Y, σE)
     W, Y_pred = QDR.ridge_regression(X̃_train_poly, Y_train, X̃_test_poly, λ)
     return W, Y_pred, Y_test
 end
-
-function get_purity_mse(X, Y, σE)
-    W, Y_pred, Y_true = estimate_purity(X, Y, σE)
-    return QDR.mse(Y_true, Y_pred)
-end

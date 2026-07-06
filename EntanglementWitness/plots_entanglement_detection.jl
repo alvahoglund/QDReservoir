@@ -80,7 +80,7 @@ function plot_linear_db_spin_space!(
     ax1 = Axis3(gl[1, 1], xlabel = "⟨σx⊗σx⟩", ylabel = "⟨σy⊗σy⟩", zlabel = "⟨σz⊗σz⟩",
         title = title, xticks = [-1, 0, 1], yticks = [-1, 0, 1], zticks = [-1, 0, 1])
     plot_states_sep = 1
-    plot_states_ent = 800
+    plot_states_ent = 80
     scatter!(ax1,
         Ω_sep_spin[1:plot_states_sep:end, 2],
         Ω_sep_spin[1:plot_states_sep:end, 3],
@@ -96,6 +96,7 @@ function plot_linear_db_spin_space!(
     )
     x_range, y_range, db_plane = get_linear_db(W_spin)
     surface!(ax1, x_range, y_range, db_plane)
+    Legend(gl[2, 1], ax1, orientation = :horizontal, framevisible = false)
     return ax1
 end
 
@@ -133,8 +134,9 @@ function test_werner_state!(
     frac_correct = []
     nbr_test_states = 1000
     n = length(state_list)
-    blues = [cgrad(:Blues)[t] for t in range(0.4, 0.9, length = n)]
-    oranges = [cgrad(:Oranges)[t] for t in range(0.4, 0.9, length = n)]
+    color_range = n == 1 ? [0.65] : range(0.4, 0.9, length = n)
+    blues = [cgrad(:Blues)[t] for t in color_range]
+    oranges = [cgrad(:Oranges)[t] for t in color_range]
     labels = isnothing(state_labels) ? ["$i" for i in 1:n] : state_labels
     for (i, state) in enumerate(state_list)
         p_range_sep = range(2 / 3, 1, length = nbr_test_states)

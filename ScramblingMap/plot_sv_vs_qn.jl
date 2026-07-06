@@ -32,7 +32,7 @@ end
 seed = 29084
 Random.seed!(seed)
 
-parameters1 = (
+parameters1 = QDR.ParamFunctions(
     ϵ_func_main = () -> 0.5,
     ϵ_func_res = () -> rand(),
     ϵb_func = () -> [0, 0, 1],
@@ -42,7 +42,7 @@ parameters1 = (
     u_inter_func = () -> rand()
 )
 
-nbr_dots_res_list = [5]
+nbr_dots_res_list = [3, 4, 5]
 t = [100, 200]
 nbr_samples = 10
 

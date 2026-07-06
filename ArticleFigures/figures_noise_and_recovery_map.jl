@@ -25,7 +25,7 @@ sv_overlaps = SV_overlap(S_SVD, Pm)
 ps_list = [(:σx, :σz), (:σ0, :σx)]
 σE_list = 10 .^ range(-7, 0, length = 30)
 mse_list = vcat([get_mse(X_large, Y_large, σE)' for σE in σE_list]...)
-mse_pred_list = vcat([mse_prediction(S_SVD, Pm, σE, b)' for σE in σE_list]...)
+mse_pred_list = vcat([QDR.mse_prediction(S_SVD, Pm, σE, b)' for σE in σE_list]...)
 
 ## ================= Data for recovery map ======================
 Ω_test = randomize_hs_states(sys, 10^5)
@@ -55,5 +55,5 @@ plot_mse_weights_compare!(gl_top, nbr_states_list1, nbr_states_list2,
 plot_varying_noise!(
     gl_bottom, σE_list, mse_list, mse_pred_list, S_SVD, sv_overlaps, Pm_dict, ps_list, b)
 rowgap!(fig.layout, 1, 20)
-
+fig
 save("Figures/spin_estimation.png", fig)

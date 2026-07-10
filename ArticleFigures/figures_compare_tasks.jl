@@ -16,7 +16,7 @@ nbr_train = (nbr_sep_states + nbr_ent_states) ÷ 2
 Ω_sep_linear, Ω_ent_linear = linear_ew_states(sys, nbr_sep_states, nbr_ent_states)
 Ω_sep_nonlinear, Ω_ent_nonlinear = nonlinear_ew_states(
     sys, nbr_sep_states, nbr_ent_states)
-Ω_purity = random_mixed_states(nbr_sep_states + nbr_ent_states, sys)
+Ω_purity = random_mixed_states(nbr_sep_states + nbr_ent_states, sys.H_main)
 Ω_spin = stack(vec(QDR.hilbert_schmidt_ensemble(sys.H_main))
 for i in 1:(nbr_sep_states + nbr_ent_states))
 
@@ -76,7 +76,8 @@ Colorbar(fig_lew[1, 3], hm12, label = "Coefficient")
 
 gl = GridLayout(fig_lew[2, 1])
 
-Ω_sub_ent, Ω_sub_sep, W_sub_spin = project_on_sub_spin_basis(
+Ω_sub_ent, Ω_sub_sep,
+W_sub_spin = project_on_sub_spin_basis(
     Ω_ent_linear, Ω_sep_linear, W_list[1])
 ax21 = plot_linear_db_spin_space!(gl, Ω_sub_sep, Ω_sub_ent, W_sub_spin,
     "Linear decision boundary, σE = $(format_σE(σE_samples[1]))")
@@ -103,7 +104,8 @@ X̃_sep = QDR.add_noise(X_sep_nonlinear, σE)
 section_size = length(sys.grids.total) * 3
 feature_transformation_alg = QDR.Polynomial2SectionFeatureTransformation(section_size)
 W_noisy, Y_pred_noisy, Y_test = construct_EW(X̃_ent, X̃_sep, σE, feature_transformation_alg)
-W_lownoise, Y_pred_lownoise, _ = construct_EW(
+W_lownoise, Y_pred_lownoise,
+_ = construct_EW(
     X_ent_nonlinear, X_sep_nonlinear, 1e-5, feature_transformation_alg)
 
 Ω_sub_ent, Ω_sub_sep = project_on_sub_spin_basis(Ω_ent_nonlinear, Ω_sep_nonlinear)

@@ -65,32 +65,43 @@ for σE in σE_samples
 end
 
 fig_lew = Figure(size = (600, 450))
-rowsize!(fig_lew.layout, 1, Relative(0.3))  # top row: 30%
-ax11 = Axis(fig_lew[1, 1])
-ax11.title = "Weight Matrix, σE = $(format_σE(σE_samples[1]))"
-plot_heatmap_W_spin_basis!(ax11, W_list[1], S, sys)
-ax12 = Axis(fig_lew[1, 2])
-ax12.title = "Weight Matrix, σE = $(format_σE(σE_samples[2]))"
-hm12 = plot_heatmap_W_spin_basis!(ax12, W_list[2], S, sys)
-Colorbar(fig_lew[1, 3], hm12, label = "Coefficient")
 
-gl = GridLayout(fig_lew[2, 1])
+function add_W_heatmap_panel!(gl)
+    rowsize!(fig_lew.layout, 1, Relative(0.3))  # top row: 30%
+    ax11 = Axis(gl[1, 1])
+    ax11.title = "Effective Weight Matrix, σE = $(format_σE(σE_samples[1]))"
+    plot_heatmap_W_spin_basis!(ax11, W_list[1], S, sys)
+    fig
+    ax12 = Axis(gl[1, 2])
+    ax12.title = "Effective Weight Matrix, σE = $(format_σE(σE_samples[2]))"
+    hm12 = plot_heatmap_W_spin_basis!(ax12, W_list[2], S, sys)
+    Colorbar(gl[1, 3], hm12, label = "Coefficient")
+end
+function add_linear_db_panel!(gl)
+    Ω_sub_ent, Ω_sub_sep,
+    W_sub_spin = project_on_sub_spin_basis(
+        Ω_ent_linear, Ω_sep_linear, W_list[1])
+    ax21 = plot_linear_db_spin_space!(gl, Ω_sub_sep, Ω_sub_ent, W_sub_spin,
+        "Linear decision boundary, σE = $(format_σE(σE_samples[1]))")
+    Legend(fig_lew[2, 2], ax21)
+end
+function add_werner_state_panel!(gl)
+    ax22 = Axis(gl[1, 1])
+    ax22.title = "Decision value for \n Singlet Werner state, σE = $(format_σE(σE_samples[1]))"
+    test_werner_state!(ax22, [QDR.singlet], W_list[1], S, σE_samples[1])
+end
 
-Ω_sub_ent, Ω_sub_sep,
-W_sub_spin = project_on_sub_spin_basis(
-    Ω_ent_linear, Ω_sep_linear, W_list[1])
-ax21 = plot_linear_db_spin_space!(gl, Ω_sub_sep, Ω_sub_ent, W_sub_spin,
-    "Linear decision boundary, σE = $(format_σE(σE_samples[1]))")
-
-ax22 = Axis(fig_lew[2, 2])
-ax22.title = "Decision value for \n Singlet Werner state, σE = $(format_σE(σE_samples[2]))"
-test_werner_state!(ax22, [QDR.singlet], W_list[2], S, σE_samples[2])
-
-gl_legend = GridLayout(fig_lew[3, 1:2])
-
-Legend(gl_legend[1, 1], ax21, framevisible = false, orientation = :horizontal)
+fig1 = Figure(size = (800, 450))
+add_W_heatmap_panel!(fig1[1, 1:2])
+add_linear_db_panel!(fig1[2, 1])
+add_werner_state_panel!(fig1[2, 2])
+fig1
 save("Figures/linear_entanglement_detection.png", fig_lew)
 
+fig_W = Figure(size = (700, 300))
+add_W_heatmap_panel!(fig_W[1, 1:2])
+fig_W
+save("Figures/linear_entanglement_detection_W.png", fig_W)
 ## =============== NONLINEAR ENTANGLEMENT DETECTION =================
 X_ent_nonlinear = get_charge_measurements(S, Ω_ent_nonlinear)
 X_sep_nonlinear = get_charge_measurements(S, Ω_sep_nonlinear)
@@ -123,3 +134,14 @@ fraction_correct = test_werner_state!(
     ax, [QDR.singlet, QDR.triplet_0, QDR.triplet_plus, QDR.triplet_minus], W_noisy, S, σE,
     feature_transformation_alg, state_labels = ["S", "T0", "T+", "T-"])
 save("Figures/nonlinear_entanglement_detection.png", fig_new)
+
+using GLMakie
+fig_db = Figure(size = (800, 450))
+gl1 = GridLayout(fig_db[1, 1])
+plot_linear_db_spin_space!(gl1, Ω_sub_sep, Ω_sub_ent, W_sub_spin,
+    "Linear decision boundary, σE = $(format_σE(σE_samples[1]))")
+gl2 = GridLayout(fig_db[1, 2])
+plot_nonlinear_db_spin_space!(
+    gl2, Ω_sub_sep, Ω_sub_ent, W_lownoise, feature_transformation_alg,
+    title = "Nonlinear decision boundary, σE = $(format_σE(1e-5))")
+save("Figures/decision_boundaries.png", fig_db)

@@ -16,7 +16,7 @@ nbr_train = (nbr_sep_states + nbr_ent_states) ÷ 2
 Ω_sep_linear, Ω_ent_linear = linear_ew_states(sys, nbr_sep_states, nbr_ent_states)
 Ω_sep_nonlinear, Ω_ent_nonlinear = nonlinear_ew_states(
     sys, nbr_sep_states, nbr_ent_states)
-Ω_purity = random_mixed_states(nbr_sep_states + nbr_ent_states, sys)
+Ω_purity = random_mixed_states(nbr_sep_states + nbr_ent_states, sys.H_main)
 Ω_spin = stack(vec(QDR.hilbert_schmidt_ensemble(sys.H_main))
 for i in 1:(nbr_sep_states + nbr_ent_states))
 

@@ -14,7 +14,7 @@ nbr_train = (nbr_sep_states + nbr_ent_states) ÷ 2
 Ω_sep_linear, Ω_ent_linear = linear_ew_states(sys, nbr_sep_states, nbr_ent_states)
 Ω_sep_nonlinear, Ω_ent_nonlinear = nonlinear_ew_states(
     sys, nbr_sep_states, nbr_ent_states)
-Ω_purity = random_mixed_states(nbr_sep_states + nbr_ent_states, sys)
+Ω_purity = random_mixed_states(nbr_sep_states + nbr_ent_states, sys.H_main)
 Ω_spin = stack(vec(QDR.hilbert_schmidt_ensemble(sys.H_main))
 for i in 1:(nbr_sep_states + nbr_ent_states))
 
@@ -77,14 +77,20 @@ S_list = S_list[sorted_indices]
 sys_list = sys_list[sorted_indices]
 
 σE_list = [10^-6, 10^-5, 10^-4, 10^-3, 10^-2]
-linear_ew_results, nonlinear_ew_results, purity_mse_list, spin_mse_list = get_performances_matrix(
+linear_ew_results, nonlinear_ew_results,
+purity_mse_list,
+spin_mse_list = get_performances_matrix(
     S_list, Ω_sep_linear, Ω_ent_linear, Ω_sep_nonlinear,
     Ω_ent_nonlinear, Ω_purity, Ω_spin, Pm, σE_list)
 #jldsave("EntanglementWitness\\compare_tasks_data\\compare_tasks_data2.jld2";
 #    linear_ew_results, nonlinear_ew_results, purity_mse_list, spin_mse_list, ssv_list, σE_list)
 
 ## ============== Plotting ================
-linear_ew_results, nonlinear_ew_results, purity_mse_list, spin_mse_list, ssv_list, σE_list = jldopen(
+linear_ew_results, nonlinear_ew_results,
+purity_mse_list,
+spin_mse_list,
+ssv_list,
+σE_list = jldopen(
     "CompareTasks\\compare_tasks_data\\compare_tasks_data2.jld2", "r") do file
     linear_ew_results = read(file, "linear_ew_results")
     nonlinear_ew_results = read(file, "nonlinear_ew_results")

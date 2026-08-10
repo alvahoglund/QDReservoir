@@ -33,11 +33,11 @@ m1_list = QDR.matrix_representation_ops(
     QDR.single_charge_probabilities(sys.grids.total), sys.H_total)
 m2_list = QDR.matrix_representation_ops(
     QDR.double_charge_probabilities(sys.grids.total), sys.H_total)
-t = [100]
+t = [100, 200]
 S0 = scrambling_map(sys, m0_list, ψ_res, hams.total, t)
 S1 = scrambling_map(sys, m1_list, ψ_res, hams.total, t)
 S2 = scrambling_map(sys, m2_list, ψ_res, hams.total, t)
-S = vcat(S1, S2)
+S = vcat(S0, S1, S2)
 
 ## Is Σ00 singular vector?
 v = Σ00 / norm(Σ00)
@@ -51,4 +51,40 @@ real.(svd(S).Vt*Pm / 2)
 
 ##Trace of effective measurements
 S*Σ00 # Example: The trace of Pi2 is small when we have few electrons in the reservoir
+
+## MSE terms
+Σab = vec(Ps[:σz, :σz])
+F = svd(S)
+σE = 10 ^ -3
+b = 0.0147
+a = 0.0588
+d = 4
+
+T1 = Σab' * F.V * diagm((b * σE^2) ./ (b * F.S .^ 2 .+ σE ^ 2)) * F.V' * Σab
+T2 = a * b * σE^4 * abs2(Σab' * F.V * diagm(1 ./ (b * F.S .^ 2 .+ σE ^ 2)) * F.V' * Σ00) /
+     (1/d - a * σE^2 * Σ00' * F.V * diagm(1 ./ (b * F.S .^ 2 .+ σE ^ 2)) * F.V' * Σ00)
+
+frac = T2/T1
+frac_bound = a*d/b * (1 - abs2((F.Vt * Σ00)[1]) / d)
+
+## W Terms
+
+Σab = vec(Ps[:σz, :σz])
+F = svd(S)
+σE = 10 ^ -3
+b = 0.0147
+a = 0.0588
+d = 4
+
+A1 = F.U * diagm(b .* (F.S .^ 2) ./ (b .* F.S .^ 2 .+ σE^2)) * F.U'
+
+A2_denom = 1 + a * Σ00' * F.V * diagm(F.S .^ 2 ./ (b .* F.S .^ 2 .+ σE^2)) * F.V' * Σ00
+A2_nom = F.U * diagm(F.S .^ 3 ./ (b .* F.S .^ 2 .+ σE^2)) * F.V' * Σ00 * Σ00' * F.V *
+         diagm(F.S ./ (b .* F.S .^ 2 .+ σE^2)) * F.U'
+A2 = a*b/A2_denom .* A2_nom
+
+Wnoisefree = Σab' * pinv(S)
+
+norm(Wnoisefree - Wnoisefree*(A1 - A2)) / norm(Wnoisefree)
+norm(Wnoisefree*A1 - Wnoisefree*(A1 - A2)) / norm(Wnoisefree)
 
